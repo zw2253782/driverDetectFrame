@@ -1,0 +1,32 @@
+package UDPService;
+
+import android.content.ComponentName;
+import android.content.ServiceConnection;
+import android.os.IBinder;
+import android.util.Log;
+
+import java.net.InetAddress;
+
+/**
+ * Created by wei on 4/4/17.
+ */
+
+public class UDPServiceConnection implements ServiceConnection {
+
+    private UDPService.UDPBinder binder = null;
+    private static final String TAG = "UDPServiceConnection";
+
+
+    public void onServiceConnected(ComponentName className, IBinder service) {
+        Log.d(TAG, "connected");
+        binder = ((UDPService.UDPBinder) service);
+    }
+    public void onServiceDisconnected(ComponentName className) {
+        binder = null;
+        Log.d(TAG, "distconnected");
+    }
+    public void sendData(byte[] data, InetAddress remoteIPAddress, int remotePort) {
+        binder.sendData(data,  remoteIPAddress, remotePort);
+    }
+
+}

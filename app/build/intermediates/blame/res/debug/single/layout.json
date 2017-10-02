@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/build/intermediates/res/merged/debug/layout/activity_main.xml",
+        "source": "/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/src/main/res/layout/activity_main.xml"
+    },
+    {
+        "merged": "/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/build/intermediates/res/merged/debug/layout/stream_dlg_view.xml",
+        "source": "/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/src/main/res/layout/stream_dlg_view.xml"
+    }
+]
