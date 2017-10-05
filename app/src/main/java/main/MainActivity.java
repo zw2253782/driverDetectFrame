@@ -1,5 +1,6 @@
 package main;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -33,12 +34,14 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.jemi.androidh264streamdemo.R;
+import com.android.application.R;
 
 import database.DatabaseHelper;
-import UDPService.UDPServiceConnection;
-import UDPService.UDPService;
+import udpService.UDPServiceConnection;
+import udpService.UDPService;
 import sensor.SensorService;
+import utility.Constants;
+import utility.FrameData;
 import utility.Trace;
 
 
@@ -50,8 +53,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 	private final static String SP_DEST_IP = "dest_ip";
 	private final static String SP_DEST_PORT = "dest_port";
 
-	private final static int DEFAULT_FRAME_RATE = 20;
+	private final static int DEFAULT_FRAME_RATE = 15;
 	private final static int DEFAULT_BIT_RATE = 500000;
+	long sequenceNo = 1;
 
 	Camera camera;
 	SurfaceHolder previewHolder;
@@ -61,7 +65,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 	DatagramSocket udpSocket;
 	public InetAddress address;
 	public int port;
-	ArrayList<byte[]> encDataList = new ArrayList<byte[]>();
+	ArrayList<FrameData> encDataList = new ArrayList<FrameData>();
 	ArrayList<Integer> encDataLengthList = new ArrayList<Integer>();
 
 	Runnable senderRun = new Runnable() {
@@ -69,7 +73,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		public void run() {
 			while (isStreaming) {
 				boolean empty = false;
-				byte[] encData = null;
+				FrameData encData = null;
 
 				synchronized (encDataList) {
 					if (encDataList.size() == 0) {
@@ -85,27 +89,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 					}
 					continue;
 				}
-				//	try
-				//{   /////////////////////////////////////////////////////////////////////////////
 				//we can start 2 thread, one is with time header send to one server and get time back
 				// the other thread will send without header and directly show the video.
-				byte[] header = String.valueOf(System.currentTimeMillis()).getBytes();
-				//Log.d(TAG, "System time long is: " + String.valueOf(header.length));
-				byte[] headerEncData = new byte[header.length + encData.length];
-				System.arraycopy(header, 0, headerEncData, 0, header.length);
-				System.arraycopy(encData, 0, headerEncData, header.length, encData.length);
-				//DatagramPacket packet = new DatagramPacket(headerEncData, headerEncData.length, address, port);
-
-				mUDPConnection.sendData(headerEncData, address, port);
-				Log.d(TAG, "send data length is: " + String.valueOf(headerEncData.length));
-				/////////////////////////////////////////////////////////////////////////////
-
+				mUDPConnection.sendData(encData, address, port);
+				sequenceNo ++;
+				//Log.d(TAG, "send data length is: " + String.valueOf(encData.length));
 			}
 		}
 	};
 
 	private static Intent mSensor = null;
-	private DatabaseHelper dbHelper_ = null;
+	public DatabaseHelper dbHelper_ = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -138,27 +132,50 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		this.previewHolder = svCameraPreview.getHolder();
 		this.previewHolder.addCallback(this);
 
+		setupFolders();
 
+	}
 
+	private void startServices() {
+		startUDPService();
 
 		mSensor = new Intent(this, SensorService.class);
 		startService(mSensor);
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("sensor"));
+		LocalBroadcastManager.getInstance(this).registerReceiver(LMessageReceiver, new IntentFilter("udp"));
 
 		long time = System.currentTimeMillis();
+		dbHelper_ = new DatabaseHelper();
 		dbHelper_.createDatabase(time);
 
+	}
 
+	private void setupFolders () {
+		File dbDir = new File(Constants.kDBFolder);
+		File videoDir = new File(Constants.kVideoFolder);
+		if (!dbDir.exists()) {
+			dbDir.mkdirs();
+		}
+		if(!videoDir.exists()) {
+			videoDir.mkdir();
+		}
 	}
 
 	protected void onDestroy() {
 		super.onDestroy();
 
 
-		stopService(mSensor);
-		mSensor = null;
-		dbHelper_.closeDatabase();
-		LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+		if (mSensor!= null){
+			stopService(mSensor);
+			mSensor = null;
+		}
+		if (dbHelper_!= null) {
+			dbHelper_.closeDatabase();
+		}
+		if (mMessageReceiver!= null) {
+			LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+		}
+		sequenceNo =1;
 
 	}
 
@@ -194,14 +211,16 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 				Log.e(TAG, "OUT OF BUFFER");
 				return;
 			}
-			Log.d(TAG, "Original data length is: " + String.valueOf(data.length));
+			//Log.d(TAG, "Original data length is: " + String.valueOf(data.length));
+			FrameData frameData = new FrameData();
+			frameData = this.encoder.offerEncoder(data);
+			//Log.d(TAG, "after encoder data length is: " + String.valueOf(encData.length));
+			frameData.originalDataSize = data.length;
+			frameData.SequenceNo_ = sequenceNo;
 
-			byte[] encData = this.encoder.offerEncoder(data);
-			Log.d(TAG, "after encoder data length is: " + String.valueOf(encData.length));
-
-			if (encData.length > 0) {
+			if (frameData.video_.length > 0) {
 				synchronized (this.encDataList) {
-					this.encDataList.add(encData);
+					this.encDataList.add(frameData);
 				}
 			}
 		}
@@ -223,9 +242,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 
 	private void startStream(String ip, int port) {
 
-		///////////////////////////////////
-		startUDPService();
-		//////////////////////////////////
+
 
 		SharedPreferences sp = this.getPreferences(Context.MODE_PRIVATE);
 		int width = sp.getInt(SP_CAM_WIDTH, 0);
@@ -342,6 +359,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 				new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
+
 						EditText etIP = (EditText) ((AlertDialog) dialog).findViewById(R.id.etIP);
 						EditText etPort = (EditText) ((AlertDialog) dialog).findViewById(R.id.etPort);
 						String ip = etIP.getText().toString();
@@ -351,6 +369,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 						} else {
 							//TODO:
 						}
+
+						startServices();
 					}
 				});
 		dlgBld.setNegativeButton(android.R.string.cancel, null);
@@ -417,6 +437,21 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 			Trace trace = new Trace();
 			trace.fromJson(message);
 
+			if (dbHelper_.isOpen()) {
+				dbHelper_.insertSensorData(trace);
+			}
+		}
+
+	};
+
+	private BroadcastReceiver LMessageReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			String message = intent.getStringExtra("latency");
+			Trace trace = new Trace();
+			trace.fromJson(message);
+
+			Log.d(TAG,"trace frome latency is: "+ message);
 			if (dbHelper_.isOpen()) {
 				dbHelper_.insertSensorData(trace);
 			}

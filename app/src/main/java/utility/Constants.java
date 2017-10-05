@@ -1,5 +1,7 @@
 package utility;
 
+import android.os.Environment;
+
 /**
  * Created by lkang on 3/29/16.
  */
@@ -22,10 +24,9 @@ public class Constants {
     public static final double kRecordingInterval = 100;
 
 
-    public static final String kPackageName = "h264";
-    public static final String kDBFolder = "/data/data/" + kPackageName + "/databases/";
+    public static final String kPackageName = "com.android.application";
+    //public static final String kDBFolder = "/data/data/" + kPackageName + "/databases/";
+    public static final String kDBFolder = Environment.getExternalStorageDirectory().getAbsolutePath().toString()+ "/LatencyDatabase/";
     public static final String kVideoFolder = "/data/data/" + kPackageName + "/videos/";
-
-
 
 }

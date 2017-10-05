@@ -13,13 +13,13 @@ import java.io.FileOutputStream;
 public class SaveWifiData {
     private static final String TAG = "SaveWifiData";
 
-    public void saveWifiData(long sendTime, long latency, long packageSize){
+    public void saveWifiData(long sendTime, long latency, long packageSize,long a){
         String filename = Environment.getExternalStorageDirectory().getAbsolutePath().toString() + "/Latencywifi/latency_dataSize.txt";
-        Log.d(TAG,filename);
+        //Log.d(TAG,filename);
 
         try {
             FileOutputStream outputStream = new FileOutputStream (new File(filename), true); // true will be same as Context.MODE_APPEND
-            outputStream.write((String.valueOf(sendTime)+ ","+ String.valueOf(latency)+ ","+ String.valueOf(packageSize)).getBytes());
+            outputStream.write((String.valueOf(sendTime)+ ","+ String.valueOf(latency)+ ","+ String.valueOf(packageSize)+ ","+ String.valueOf(a)).getBytes());
             outputStream.write('\n');
             outputStream.close();
             Log.d(TAG,"file saved");

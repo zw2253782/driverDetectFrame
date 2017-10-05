@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.jemi.androidh264streamdemo"
+    package="com.android.application"
     android:versionCode="1"
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="16"
+        android:minSdkVersion="19"
         android:targetSdkVersion="21" />
 
     <uses-permission android:name="android.permission.CAMERA" />
@@ -46,13 +46,17 @@
         </activity>
 
         <service
-            android:name="UDPService.UDPService"
+            android:name="udpService.UDPService"
             android:enabled="true"
             android:exported="true" />
+        <service
+            android:name="sensor.SensorService"
+            android:enabled="true"
+            android:exported="false" />
 
         <provider
             android:name="com.android.tools.fd.runtime.InstantRunContentProvider"
-            android:authorities="com.jemi.androidh264streamdemo.com.android.tools.fd.runtime.InstantRunContentProvider"
+            android:authorities="com.android.application.com.android.tools.fd.runtime.InstantRunContentProvider"
             android:multiprocess="true" />
     </application>
 

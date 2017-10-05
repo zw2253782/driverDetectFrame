@@ -8,12 +8,15 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
+import android.os.Bundle;
+
+import utility.FrameData;
 
 public class AvcEncoder
 {
 	private final static String TAG = AvcEncoder.class.getSimpleName();
 	private final static String MIME_TYPE = "video/avc";
-	private final static int I_FRAME_INTERVAL = 5;
+	private final static int I_FRAME_INTERVAL = 1;
 	
     MediaCodec mediaCodec;  
     int width;  
@@ -29,7 +32,9 @@ public class AvcEncoder
     int cSize;
     int halfWidth;
     int halfHeight;
-    
+    boolean isIframe;
+
+
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
       
     public AvcEncoder() 
@@ -101,8 +106,8 @@ public class AvcEncoder
         }  
     }  
    
-    public byte[] offerEncoder(byte[] input)   
-    {     
+    public FrameData offerEncoder(byte[] input)
+    {
         YV12toYUV420PackedSemiPlanar(input, yuv420, width, height);
         try {  
             ByteBuffer[] inputBuffers = mediaCodec.getInputBuffers();  
@@ -154,7 +159,10 @@ public class AvcEncoder
                 outputStream.reset();
                 outputStream.write(spsPpsInfo);
                 outputStream.write(ret);
-            }  
+                isIframe = true;
+            } else {
+                isIframe = false;
+            }
               
         }
         catch (Throwable t) 
@@ -163,8 +171,16 @@ public class AvcEncoder
         }  
         byte[] ret = outputStream.toByteArray();
         outputStream.reset();
-        return ret;  
-    }  
+        FrameData frameData = new FrameData(isIframe,ret);
+        return frameData;
+        //return ret;
+    }
+
+    public void forceIFrame() {
+        Bundle b = new Bundle();
+        b.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
+        mediaCodec.setParameters(b);
+    }
     
     public byte[] YV12toYUV420PackedSemiPlanar(final byte[] input, final byte[] output, final int width, final int height) 
     {

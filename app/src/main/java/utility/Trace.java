@@ -17,20 +17,28 @@ public class Trace implements Serializable {
     public String type = "none";
 
 
+    public long videoSendTime = 0;
+    public long sequenceNo = 0;
+    public long roundLatency = 0;
+    public long oraginalSize = 0;
+    public boolean isIFrame = false;
+    public long PCtime = 0;
+    public long comDataSize = 0;
+    public long PCReceivedDataSize = 0;
+
     private static String TAG = "Trace";
 
     public static String ACCELEROMETER = "accelerometer";
     public static String GYROSCOPE = "gyroscope";
     public static String MAGNETOMETER = "magnetometer";
+    public static String LATENCY = "latency";
 
     public static String ROTATION_MATRIX = "rotation_matrix";
     public static String GPS = "gps";
 
 
     public Trace() {
-        time = 0;
-        dim = 3;
-        values = new double [dim];
+
     }
 
     public Trace(int d) {
@@ -64,7 +72,15 @@ public class Trace implements Serializable {
             writer.beginObject();
             writer.name("type").value(type);
             writer.name("time").value(time);
-            writer.name("dim").value(dim);
+            writer.name("videoSendTime").value(videoSendTime);
+            writer.name("sequenceNo").value(sequenceNo);
+            writer.name("roundLatency").value(roundLatency);
+            writer.name("oraginalSize").value(oraginalSize);
+            writer.name("PCtime").value(PCtime);
+            writer.name("comDataSize").value(comDataSize);
+            writer.name("PCReceivedDataSize").value(PCReceivedDataSize);
+            writer.name("isIFrame").value(isIFrame);
+
             for (int i = 0; i < dim; ++i) {
                 writer.name("x" + String.valueOf(i)).value(values[i]);
             }
@@ -92,7 +108,23 @@ public class Trace implements Serializable {
                     values = new double[dim];
                 } else if (name.contains("x")) {
                     int index = Integer.valueOf(name.substring(1)).intValue();
-                    values[index] = (float)reader.nextDouble();
+                    values[index] = (double) reader.nextDouble();
+                }else if (name.equals("videoSendTime")) {
+                    videoSendTime = reader.nextLong();
+                }else if (name.equals("sequenceNo")) {
+                    sequenceNo = reader.nextLong();
+                }else if (name.equals("roundLatency")) {
+                    roundLatency = reader.nextLong();
+                }else if (name.equals("oraginalSize")) {
+                    oraginalSize = reader.nextLong();
+                }else if (name.equals("PCtime")) {
+                    PCtime = reader.nextLong();
+                }else if (name.equals("comDataSize")) {
+                    comDataSize = reader.nextLong();
+                }else if (name.equals("PCReceivedDataSize")) {
+                    PCReceivedDataSize = reader.nextLong();
+                } else if (name.equals("isIFrame")) {
+                    isIFrame = reader.nextBoolean();
                 } else {
                     reader.skipValue();
                 }

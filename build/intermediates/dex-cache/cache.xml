@@ -3,6 +3,15 @@
 
     <item
         is-multidex="true"
+        jar="/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/build/intermediates/incremental-classes/debug/instant-run-bootstrap.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="26.0.1"
+        sha1="d5acc509b4827e48db6a86e7a45a03e61a5f5294">
+        <dex dex="/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/build/intermediates/transforms/dex/debug/folders/1000/10000/instant-run-bootstrap_a55aed8a04fb4264e36eca85dd1453741d802042/classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
         jar="/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/build/intermediates/incremental-runtime-classes/debug/instant-run.jar"
         jumboMode="true"
         optimize="true"
@@ -21,21 +30,21 @@
     </item>
     <item
         is-multidex="true"
-        jar="/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/build/intermediates/incremental-classes/debug/instant-run-bootstrap.jar"
-        jumboMode="true"
-        optimize="true"
-        revision="26.0.1"
-        sha1="7719eec0405a9ec6a71a0f3683e8f794e4e2047b">
-        <dex dex="/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/build/intermediates/transforms/dex/debug/folders/1000/10000/instant-run-bootstrap_a55aed8a04fb4264e36eca85dd1453741d802042/classes.dex" />
-    </item>
-    <item
-        is-multidex="true"
         jar="/home/wei/.android/build-cache/677ae29d41bb0f3f90a946f508092caba9a01da6/output/jars/classes.jar"
         jumboMode="true"
         optimize="true"
         revision="26.0.1"
         sha1="2c91c949a45a21cdecf26e03951e46c7beec9ad8">
         <dex dex="/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/build/intermediates/transforms/dex/debug/folders/1000/10/classes_3d11d0f9cfd305f532d1a2603878763a7d186644/classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="/home/wei/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/2.6.2/f1bc476cc167b18e66c297df599b2377131a8947/gson-2.6.2.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="26.0.1"
+        sha1="f1bc476cc167b18e66c297df599b2377131a8947">
+        <dex dex="/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/build/intermediates/transforms/dex/debug/folders/1000/10/gson-2.6.2_a8380ae8bf6fc662f0d1cd636995419c732bd5f1/classes.dex" />
     </item>
     <item
         is-multidex="true"

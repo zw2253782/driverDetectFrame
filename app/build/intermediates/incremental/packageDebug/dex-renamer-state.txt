@@ -1,4 +1,4 @@
-#Mon Oct 02 14:51:21 CDT 2017
+#Wed Oct 04 22:33:26 CDT 2017
 base.0=/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/build/intermediates/transforms/dex/debug/folders/1000/10000/instant-run-bootstrap_a55aed8a04fb4264e36eca85dd1453741d802042
 renamed.1=classes.dex
 renamed.0=classes2.dex

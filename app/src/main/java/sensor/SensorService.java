@@ -54,7 +54,7 @@ public class SensorService extends Service implements SensorEventListener, Locat
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.d(TAG, "location update speed:" + String.valueOf(location.getSpeed()));
+        //Log.d(TAG, "location update speed:" + String.valueOf(location.getSpeed()));
         // TODO Auto-generated method stub
         if(location != null){
             Trace trace = new Trace(3);
