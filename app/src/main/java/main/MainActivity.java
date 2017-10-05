@@ -212,11 +212,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 				return;
 			}
 			//Log.d(TAG, "Original data length is: " + String.valueOf(data.length));
-			FrameData frameData = new FrameData();
-			frameData = this.encoder.offerEncoder(data);
+			FrameData frameData = this.encoder.offerEncoder(data);
 			//Log.d(TAG, "after encoder data length is: " + String.valueOf(encData.length));
-			frameData.originalDataSize = data.length;
-			frameData.SequenceNo_ = sequenceNo;
+			//frameData.originalDataSize = data.length;
+			//frameData.SequenceNo_ = sequenceNo;
 
 			if (frameData.video_.length > 0) {
 				synchronized (this.encDataList) {

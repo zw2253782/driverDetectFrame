@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import utility.Constants;
+import utility.FrameData;
 import utility.Trace;
 
 
@@ -21,7 +22,6 @@ public class DatabaseHelper {
     // Logcat tag
     private static final String TAG = "DatabaseHelper";
 
-    private SQLiteDatabase meta_ = null;
     private SQLiteDatabase db_ = null;
 
 
@@ -35,6 +35,8 @@ public class DatabaseHelper {
 
 
     private static final String KEY_TIME = "time";
+
+
     private static final String videoSendTime = "videoSendTime";
     private static final String sequenceNo = "sequenceNo";
     private static final String roundLatency = "roundLatency";
@@ -101,9 +103,6 @@ public class DatabaseHelper {
 
     public void closeDatabase() {
         this.opened = false;
-        if(meta_ != null && meta_.isOpen()) {
-            meta_.close();
-        }
         if(db_ != null && db_.isOpen()) {
             db_.close();
         }
@@ -113,6 +112,22 @@ public class DatabaseHelper {
     }
 
 
+    public void insertFrameData(FrameData frameData) {
+        ContentValues values = new ContentValues();
+        db_.insert(TABLE_LATENCY, null, values);
+    }
+
+    public int updateFrameData(FrameData updatedFrameData) {
+        Log.d(TAG, "updateFrameData");
+
+        //update information in meta table
+        ContentValues data = new ContentValues();
+        data.put("roundLatency", updatedFrameData.latency_);
+
+        String where = "time = ? ";
+        String[] whereArgs = {String.valueOf(updatedFrameData.timeStamp_)};
+        return db_.update(TABLE_LATENCY, data, where, whereArgs);
+    }
 
     public void insertSensorData(Trace trace) {
         String type = trace.type;

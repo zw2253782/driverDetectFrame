@@ -112,7 +112,7 @@ public class UDPService extends Service implements Runnable {
 
                 //Log.d(TAG,"received value is: "+ sentence);
                 if (sentence.length()!=0) {
-                    dataProcess(sentence);
+                    frameDataProcess(sentence);
                 }
 
             } catch (IOException e) {
@@ -122,42 +122,9 @@ public class UDPService extends Service implements Runnable {
         }
     }
 
-    public void dataProcess(String data){
-        long timeStamp = 0;
-        long sequenceNo = 0;
-        long oraginalSize = 0;
-        boolean isIFrame = false;
-        long PCtime = 0;
-        long comDataSize = 0;
-        long PCReceivedDataSize = 0;
-
-        try {
-            JSONObject obj = new JSONObject(data);
-            timeStamp = Long.parseLong(obj.getString("timeStamp_"));
-            sequenceNo = Long.parseLong(obj.getString("SequenceNo_"));
-            oraginalSize = Long.parseLong(obj.getString("originalDataSize_"));
-            PCtime = Long.parseLong(obj.getString("PCtime_"));
-            comDataSize = Long.parseLong(obj.getString("comDataSize_"));
-            PCReceivedDataSize = Long.parseLong(obj.getString("PCReceivedDataSize_"));
-            isIFrame = Boolean.parseBoolean(obj.getString("isIFrame_"));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        long roundLatency = System.currentTimeMillis() - timeStamp;
-        //Log.d(TAG,"roundLatency is: " + String.valueOf(roundLatency));
-
-        Trace trace = new Trace();
-        trace.time = System.currentTimeMillis();
-        trace.videoSendTime = timeStamp;
-        trace.sequenceNo = sequenceNo;
-        trace.roundLatency = roundLatency;
-        trace.oraginalSize = oraginalSize;
-        trace.PCtime = PCtime;
-        trace.comDataSize = comDataSize;
-        trace.PCReceivedDataSize = PCReceivedDataSize;
-        trace.type = Trace.LATENCY;
-        trace.isIFrame = isIFrame;
-        sendTrace(trace);
+    public void frameDataProcess(String data){
+        Gson gson = new Gson();
+        FrameData frameData = gson.fromJson(data, FrameData.class);
     }
 
 
@@ -173,9 +140,8 @@ public class UDPService extends Service implements Runnable {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-
-
     }
+
 
     private void sendTrace(Trace trace) {
         //Log.d(TAG, trace.toJson());

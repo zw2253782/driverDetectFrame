@@ -32,7 +32,6 @@ public class AvcEncoder
     int cSize;
     int halfWidth;
     int halfHeight;
-    boolean isIframe;
 
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -108,6 +107,7 @@ public class AvcEncoder
    
     public FrameData offerEncoder(byte[] input)
     {
+        boolean isIframe = false;
         YV12toYUV420PackedSemiPlanar(input, yuv420, width, height);
         try {  
             ByteBuffer[] inputBuffers = mediaCodec.getInputBuffers();  
@@ -160,8 +160,6 @@ public class AvcEncoder
                 outputStream.write(spsPpsInfo);
                 outputStream.write(ret);
                 isIframe = true;
-            } else {
-                isIframe = false;
             }
               
         }
