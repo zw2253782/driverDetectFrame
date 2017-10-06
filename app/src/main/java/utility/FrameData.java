@@ -18,9 +18,9 @@ public class FrameData {
     public FrameData(){
     }
 
-    public FrameData (boolean bool, byte[] data){
+    public FrameData (boolean isIFrame, byte[] data){
         this.videoSendTime = System.currentTimeMillis();
-        this.isIFrame = bool;
+        this.isIFrame = isIFrame;
         this.frameData = data;
         this.compressedDataSize = data.length;
     }

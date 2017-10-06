@@ -43,7 +43,6 @@ import udpService.UDPService;
 import sensor.SensorService;
 import utility.Constants;
 import utility.FrameData;
-import utility.PrintObj;
 import utility.Trace;
 
 
@@ -55,13 +54,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 	private final static String SP_DEST_IP = "dest_ip";
 	private final static String SP_DEST_PORT = "dest_port";
 
-	private final static int DEFAULT_FRAME_RATE = 15;
+	private final static int DEFAULT_FRAME_RATE = 1;
 	private final static int DEFAULT_BIT_RATE = 500000;
 
 	Camera camera;
 	SurfaceHolder previewHolder;
 	byte[] previewBuffer;
 	boolean isStreaming = false;
+	boolean isUDPStart = false;
 	AvcEncoder encoder;
 	DatagramSocket udpSocket;
 	public InetAddress address;
@@ -69,18 +69,22 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 	ArrayList<FrameData> encDataList = new ArrayList<FrameData>();
 	ArrayList<Integer> encDataLengthList = new ArrayList<Integer>();
 
+
+	private static Intent mSensor = null;
+	public DatabaseHelper dbHelper_ = null;
+
 	Runnable senderRun = new Runnable() {
 		@Override
 		public void run() {
 			while (isStreaming) {
 				boolean empty = false;
-				FrameData encData = null;
+				FrameData frameData = null;
 
 				synchronized (encDataList) {
 					if (encDataList.size() == 0) {
 						empty = true;
 					} else
-						encData = encDataList.remove(0);
+						frameData = encDataList.remove(0);
 				}
 				if (empty) {
 					try {
@@ -90,10 +94,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 					}
 					continue;
 				}
+				frameData.videoSendTime = System.currentTimeMillis();
+				if (dbHelper_.isOpen()) {
+					dbHelper_.updateFrameData(frameData);
+					Log.d(TAG,"update sendtime: " + dbHelper_.updateFrameData(frameData));
+				}
 				//we can start 2 thread, one is with time header send to one server and get time back
 				// the other thread will send without header and directly show the video.
-				if (mUDPConnection != null && mUDP != null) {
-					mUDPConnection.sendData(encData, address, port);
+				if (mUDPConnection != null && mUDP != null && isUDPStart) {
+					mUDPConnection.sendData(frameData, address, port);
 				}
 
 				//Log.d(TAG, "send data length is: " + String.valueOf(encData.length));
@@ -101,8 +110,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		}
 	};
 
-	private static Intent mSensor = null;
-	public DatabaseHelper dbHelper_ = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -416,6 +423,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		mUDPConnection = new UDPServiceConnection();
 		bindService(mUDP, mUDPConnection, Context.BIND_AUTO_CREATE);
 		startService(mUDP);
+		isUDPStart = true;
 	}
 
 	private void stopUDPService() {
@@ -424,6 +432,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 			stopService(mUDP);
 			mUDP = null;
 			mUDPConnection = null;
+			isUDPStart = false;
 		}
 	}
 

@@ -37,7 +37,7 @@ public class DatabaseHelper {
     private static final String roundLatency = "roundLatency";
     private static final String oraginalSize = "oraginalSize";
     private static final String PCtime = "PCtime";
-    private static final String comDataSize = "comDataSize";
+    private static final String compressedDataSize = "compressedDataSize";
     private static final String isIFrame = "isIFrame";
 
 
@@ -62,9 +62,9 @@ public class DatabaseHelper {
 
 
     private static final String CREATE_TABLE_LATENCY = "CREATE TABLE IF NOT EXISTS "
-            + TABLE_LATENCY + "(" + Sequence + " INTEGER PRIMARY KEY,"
-            + videoSendTime + " REAL," +  roundLatency + " REAL,"
-            + oraginalSize + " REAL," + PCtime + " REAL," +  comDataSize + " REAL,"
+            + TABLE_LATENCY + "(" + videoSendTime + " INTEGER PRIMARY KEY,"
+            + Sequence + " REAL," +  roundLatency + " REAL,"
+            + oraginalSize + " REAL," + PCtime + " REAL," +  compressedDataSize + " REAL,"
             + isIFrame + " REAL" + ")";
 
     private static final String CREATE_TABLE_ROTATION_MATRIX = "CREATE TABLE IF NOT EXISTS "
@@ -85,7 +85,7 @@ public class DatabaseHelper {
     public void createDatabase(long t) {
         this.opened = true;
         //db_ = SQLiteDatabase.openOrCreateDatabase(Constants.kDBFolder + String.valueOf(t).concat(".db"), null, null);
-        db_ = SQLiteDatabase.openOrCreateDatabase(Environment.getExternalStorageDirectory().getAbsolutePath().toString()+ "/LatencyDatabase/" + String.valueOf(t).concat(".db"), null, null);
+        db_ = SQLiteDatabase.openOrCreateDatabase(Environment.getExternalStorageDirectory().getAbsolutePath().toString()+ "/FrameDatabase/" + String.valueOf(t).concat(".db"), null, null);
         db_.execSQL(CREATE_TABLE_ACCELEROMETER);
         db_.execSQL(CREATE_TABLE_GYROSCOPE);
         db_.execSQL(CREATE_TABLE_MAGNETOMETER);
@@ -105,7 +105,7 @@ public class DatabaseHelper {
         return this.opened;
     }
 
-    private String[] dataName = {"videoSendTime","Sequence","roundLatency","oraginalSize"};
+    //private String[] dataName = {"videoSendTime","Sequence","roundLatency","oraginalSize"};
 
     public void insertFrameData(FrameData frameData) {
             ContentValues values = new ContentValues();
@@ -114,24 +114,22 @@ public class DatabaseHelper {
             values.put(roundLatency, frameData.roundLatency);
             values.put(oraginalSize, frameData.originalDataSize);
             values.put(PCtime, frameData.PCtime);
-            values.put(comDataSize, frameData.compressedDataSize);
+            values.put(compressedDataSize, frameData.compressedDataSize);
             values.put(isIFrame, frameData.isIFrame);
             db_.insert(TABLE_LATENCY, null, values);
     }
 
+
     public int updateFrameData(FrameData updatedFrameData) {
         Log.d(TAG, "updateFrameData");
-        PrintObj print = new PrintObj();
-        print.printObj(updatedFrameData);
-        //update information in meta table
-        ContentValues data = new ContentValues();
-        data.put(roundLatency, 11);
-        //data.put("roundLatency", updatedFrameData.roundLatency);
 
+        ContentValues args = new ContentValues();
+        args.put(roundLatency, updatedFrameData.roundLatency);
+        args.put(PCtime,updatedFrameData.PCtime);
 
-        String where = "videoSendTime = ? ";
-        String[] whereArgs = {String.valueOf(updatedFrameData.videoSendTime)};
-        return db_.update(TABLE_LATENCY, data, where, whereArgs);
+        String where = " Sequence = ? ";
+        String[] whereArgs = {String.valueOf(updatedFrameData.Sequence)};
+        return db_.update(TABLE_LATENCY, args, where, whereArgs);
     }
 
     public void insertSensorData(Trace trace) {
