@@ -1,2 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<merger version="3"><dataSet config="output"><source path="/home/wei/.android/build-cache/677ae29d41bb0f3f90a946f508092caba9a01da6/output/assets"/></dataSet><dataSet config="main"><source path="/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/src/main/assets"/><source path="/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/build/generated/assets/shaders/debug"/></dataSet><dataSet config="debug"><source path="/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/src/debug/assets"/></dataSet></merger>

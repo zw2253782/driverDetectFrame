@@ -1,4 +1,0 @@
-#Tue Oct 03 21:30:57 CDT 2017
-base.0=/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/build/intermediates/transforms/dex/debug/folders/1000/5/slice_2
-renamed.0=classes.dex
-file.0=/home/wei/AndroidStudioProjects/AndroidH264StreamDemo/app/build/intermediates/transforms/dex/debug/folders/1000/5/slice_2/classes.dex
