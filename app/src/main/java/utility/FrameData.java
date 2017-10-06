@@ -11,13 +11,11 @@ public class FrameData {
     public long originalDataSize = 0;
     public long compressedDataSize = 0;
     public long PCtime = 0;
-    public long roundBackTime = 0;
 
     private int subIndex = 0;
     private int subSum = 0;
 
     public FrameData(){
-        //I set the length as 8 digit.
     }
 
     public FrameData (boolean bool, byte[] data){
@@ -26,7 +24,6 @@ public class FrameData {
         this.frameData = data;
         this.compressedDataSize = data.length;
     }
-
 
     public long getDataSize() {
         return frameData.length;

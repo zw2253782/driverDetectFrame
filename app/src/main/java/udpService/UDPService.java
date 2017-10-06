@@ -108,14 +108,11 @@ public class UDPService extends Service implements Runnable {
                 long roundBackTime = System.currentTimeMillis();
 
                 String sentence = new String(receiveData, 0, receivePacket.getLength());
-
                 //get UDPClient ip and port
                 remoteIPAddress = receivePacket.getAddress();
                 remotePort = receivePacket.getPort();
 
-                //Log.d(TAG,"received value is: "+ sentence);
                 if (sentence.length()!=0) {
-                    Log.d(TAG,"received frame data is: " + sentence);
                     sendFrame(frameProcess(sentence,roundBackTime));
                 }
 
@@ -126,6 +123,7 @@ public class UDPService extends Service implements Runnable {
         }
     }
 
+    //process data
     private String frameProcess(String string, long roundBackTime){
         Gson gson = new Gson();
         FrameData frameData = gson.fromJson(string, FrameData.class);
@@ -148,9 +146,8 @@ public class UDPService extends Service implements Runnable {
         }
     }
 
-
+    //send received frame data to main
     private void sendFrame(String frameData) {
-        //Log.d(TAG, trace.toJson());
         Intent intent = new Intent("udp");
         intent.putExtra("latency", frameData);
 

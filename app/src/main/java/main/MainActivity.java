@@ -215,7 +215,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 				return;
 			}
 			FrameData frameData = this.encoder.offerEncoder(data);
-
+			dbHelper_.insertFrameData(frameData);
 			if (frameData.frameData.length > 0) {
 				synchronized (this.encDataList) {
 					this.encDataList.add(frameData);
@@ -450,11 +450,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 			Gson gson = new Gson();
 			FrameData frameData = gson.fromJson(message, FrameData.class);
 
-
 /*			PrintObj print = new PrintObj();
 			print.printObj(frameData);*/
 			if (dbHelper_.isOpen()) {
 				dbHelper_.updateFrameData(frameData);
+				Log.d(TAG,"updateFrameData " + dbHelper_.updateFrameData(frameData));
 			}
 		}
 

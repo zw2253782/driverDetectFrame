@@ -8,6 +8,7 @@ import android.util.Log;
 
 
 import utility.FrameData;
+import utility.PrintObj;
 import utility.Trace;
 
 
@@ -37,7 +38,6 @@ public class DatabaseHelper {
     private static final String oraginalSize = "oraginalSize";
     private static final String PCtime = "PCtime";
     private static final String comDataSize = "comDataSize";
-    private static final String PCReceivedDataSize = "PCReceivedDataSize";
     private static final String isIFrame = "isIFrame";
 
 
@@ -65,7 +65,7 @@ public class DatabaseHelper {
             + TABLE_LATENCY + "(" + Sequence + " INTEGER PRIMARY KEY,"
             + videoSendTime + " REAL," +  roundLatency + " REAL,"
             + oraginalSize + " REAL," + PCtime + " REAL," +  comDataSize + " REAL,"
-            + PCReceivedDataSize + " REAL," + isIFrame + " REAL" + ")";
+            + isIFrame + " REAL" + ")";
 
     private static final String CREATE_TABLE_ROTATION_MATRIX = "CREATE TABLE IF NOT EXISTS "
             + TABLE_ROTATION_MATRIX + "(" + KEY_TIME + " INTEGER PRIMARY KEY,"
@@ -75,7 +75,6 @@ public class DatabaseHelper {
             + ")";
 
     private boolean opened = false;
-    private boolean databaseCreated = false;
     // public interfaces
     public DatabaseHelper() {
         this.opened = true;
@@ -93,7 +92,6 @@ public class DatabaseHelper {
         db_.execSQL(CREATE_TABLE_GPS);
         db_.execSQL(CREATE_TABLE_ROTATION_MATRIX);
         db_.execSQL(CREATE_TABLE_LATENCY);
-        databaseCreated = true;
     }
 
 
@@ -107,6 +105,8 @@ public class DatabaseHelper {
         return this.opened;
     }
 
+    private String[] dataName = {"videoSendTime","Sequence","roundLatency","oraginalSize"};
+
     public void insertFrameData(FrameData frameData) {
             ContentValues values = new ContentValues();
             values.put(videoSendTime, frameData.videoSendTime);
@@ -117,16 +117,17 @@ public class DatabaseHelper {
             values.put(comDataSize, frameData.compressedDataSize);
             values.put(isIFrame, frameData.isIFrame);
             db_.insert(TABLE_LATENCY, null, values);
-
     }
-
 
     public int updateFrameData(FrameData updatedFrameData) {
         Log.d(TAG, "updateFrameData");
-
+        PrintObj print = new PrintObj();
+        print.printObj(updatedFrameData);
         //update information in meta table
         ContentValues data = new ContentValues();
-        data.put("roundLatency", updatedFrameData.roundLatency);
+        data.put(roundLatency, 11);
+        //data.put("roundLatency", updatedFrameData.roundLatency);
+
 
         String where = "videoSendTime = ? ";
         String[] whereArgs = {String.valueOf(updatedFrameData.videoSendTime)};

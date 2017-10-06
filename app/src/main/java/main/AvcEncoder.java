@@ -181,14 +181,7 @@ public class AvcEncoder
         frameData.compressedDataSize = ret.length;
         sequence ++;
 
-        DatabaseHelper db_ = new DatabaseHelper();
-        if (db_.isOpen()) {
-            db_.insertFrameData(frameData);
-        }
-/*        PrintObj print = new PrintObj();
-        print.printObj(frameData);*/
         return frameData;
-        //return ret;
     }
 
     public void forceIFrame() {
