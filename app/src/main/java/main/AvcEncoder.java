@@ -10,7 +10,9 @@ import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.os.Bundle;
 
+import database.DatabaseHelper;
 import utility.FrameData;
+import utility.PrintObj;
 
 public class AvcEncoder
 {
@@ -32,6 +34,8 @@ public class AvcEncoder
     int cSize;
     int halfWidth;
     int halfHeight;
+    long sequence = 1;
+
 
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -97,7 +101,9 @@ public class AvcEncoder
         try
         {  
             mediaCodec.stop();  
-            mediaCodec.release();  
+            mediaCodec.release();
+            sequence = 1;
+
         }
         catch (Exception e)
         {   
@@ -170,6 +176,17 @@ public class AvcEncoder
         byte[] ret = outputStream.toByteArray();
         outputStream.reset();
         FrameData frameData = new FrameData(isIframe,ret);
+        frameData.originalDataSize = input.length;
+        frameData.Sequence = sequence;
+        frameData.compressedDataSize = ret.length;
+        sequence ++;
+
+        DatabaseHelper db_ = new DatabaseHelper();
+        if (db_.isOpen()) {
+            db_.insertFrameData(frameData);
+        }
+/*        PrintObj print = new PrintObj();
+        print.printObj(frameData);*/
         return frameData;
         //return ret;
     }

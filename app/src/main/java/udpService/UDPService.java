@@ -22,6 +22,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import database.DatabaseHelper;
 import utility.FrameData;
 import utility.Trace;
 
@@ -104,6 +105,8 @@ public class UDPService extends Service implements Runnable {
             DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
             try {
                 localSocket.receive(receivePacket);
+                long roundBackTime = System.currentTimeMillis();
+
                 String sentence = new String(receiveData, 0, receivePacket.getLength());
 
                 //get UDPClient ip and port
@@ -112,7 +115,8 @@ public class UDPService extends Service implements Runnable {
 
                 //Log.d(TAG,"received value is: "+ sentence);
                 if (sentence.length()!=0) {
-                    frameDataProcess(sentence);
+                    Log.d(TAG,"received frame data is: " + sentence);
+                    sendFrame(frameProcess(sentence,roundBackTime));
                 }
 
             } catch (IOException e) {
@@ -122,16 +126,18 @@ public class UDPService extends Service implements Runnable {
         }
     }
 
-    public void frameDataProcess(String data){
+    private String frameProcess(String string, long roundBackTime){
         Gson gson = new Gson();
-        FrameData frameData = gson.fromJson(data, FrameData.class);
+        FrameData frameData = gson.fromJson(string, FrameData.class);
+        frameData.roundLatency = roundBackTime - frameData.videoSendTime;
+        return gson.toJson(frameData);
     }
-
-
 
     //send data back to UDPClient
     public void send(FrameData sendData, InetAddress remoteIPAddress, int remotePort) {
         Gson gson = new Gson();
+
+        sendData.videoSendTime = System.currentTimeMillis();
         DatagramPacket sendPacket = new DatagramPacket(gson.toJson(sendData).getBytes(), gson.toJson(sendData).getBytes().length, remoteIPAddress, remotePort);
         //Log.d(TAG,"gson.toJson(sendData) " + gson.toJson(sendData).toString());
         try {
@@ -143,10 +149,10 @@ public class UDPService extends Service implements Runnable {
     }
 
 
-    private void sendTrace(Trace trace) {
+    private void sendFrame(String frameData) {
         //Log.d(TAG, trace.toJson());
         Intent intent = new Intent("udp");
-        intent.putExtra("latency", trace.toJson());
+        intent.putExtra("latency", frameData);
 
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }

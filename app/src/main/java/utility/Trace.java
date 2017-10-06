@@ -72,15 +72,7 @@ public class Trace implements Serializable {
             writer.beginObject();
             writer.name("type").value(type);
             writer.name("time").value(time);
-            writer.name("videoSendTime").value(videoSendTime);
-            writer.name("sequenceNo").value(sequenceNo);
-            writer.name("roundLatency").value(roundLatency);
-            writer.name("oraginalSize").value(oraginalSize);
-            writer.name("PCtime").value(PCtime);
-            writer.name("comDataSize").value(comDataSize);
-            writer.name("PCReceivedDataSize").value(PCReceivedDataSize);
-            writer.name("isIFrame").value(isIFrame);
-
+            writer.name("dim").value(dim);
             for (int i = 0; i < dim; ++i) {
                 writer.name("x" + String.valueOf(i)).value(values[i]);
             }
@@ -108,8 +100,27 @@ public class Trace implements Serializable {
                     values = new double[dim];
                 } else if (name.contains("x")) {
                     int index = Integer.valueOf(name.substring(1)).intValue();
-                    values[index] = (double) reader.nextDouble();
-                }else if (name.equals("videoSendTime")) {
+                    values[index] = (float)reader.nextDouble();
+                } else {
+                    reader.skipValue();
+                }
+            }
+            reader.endObject();
+        } catch (Exception e) {
+            Log.d(TAG, "read to json failed");
+        }
+    }
+
+
+/*
+    public void frameFromString(String json) {
+        StringReader sr = new StringReader(json);
+        JsonReader reader = new JsonReader(sr);
+        try {
+            reader.beginObject();
+            while (reader.hasNext()) {
+                String name = reader.nextName();
+                if (name.equals("videoSendTime")) {
                     videoSendTime = reader.nextLong();
                 }else if (name.equals("sequenceNo")) {
                     sequenceNo = reader.nextLong();
@@ -131,8 +142,9 @@ public class Trace implements Serializable {
             }
             reader.endObject();
         } catch (Exception e) {
-            Log.d(TAG, "read to json failed");
+            Log.d(TAG, "Frame read from string failed");
         }
     }
+*/
 
 }

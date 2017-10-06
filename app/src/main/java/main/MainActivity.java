@@ -35,6 +35,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.android.application.R;
+import com.google.gson.Gson;
 
 import database.DatabaseHelper;
 import udpService.UDPServiceConnection;
@@ -42,6 +43,7 @@ import udpService.UDPService;
 import sensor.SensorService;
 import utility.Constants;
 import utility.FrameData;
+import utility.PrintObj;
 import utility.Trace;
 
 
@@ -55,7 +57,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 
 	private final static int DEFAULT_FRAME_RATE = 15;
 	private final static int DEFAULT_BIT_RATE = 500000;
-	long sequenceNo = 1;
 
 	Camera camera;
 	SurfaceHolder previewHolder;
@@ -91,8 +92,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 				}
 				//we can start 2 thread, one is with time header send to one server and get time back
 				// the other thread will send without header and directly show the video.
-				mUDPConnection.sendData(encData, address, port);
-				sequenceNo ++;
+				if (mUDPConnection != null && mUDP != null) {
+					mUDPConnection.sendData(encData, address, port);
+				}
+
 				//Log.d(TAG, "send data length is: " + String.valueOf(encData.length));
 			}
 		}
@@ -144,21 +147,22 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("sensor"));
 		LocalBroadcastManager.getInstance(this).registerReceiver(LMessageReceiver, new IntentFilter("udp"));
 
-		long time = System.currentTimeMillis();
-		dbHelper_ = new DatabaseHelper();
-		dbHelper_.createDatabase(time);
+
 
 	}
 
 	private void setupFolders () {
 		File dbDir = new File(Constants.kDBFolder);
-		File videoDir = new File(Constants.kVideoFolder);
+		//File videoDir = new File(Constants.kVideoFolder);
 		if (!dbDir.exists()) {
 			dbDir.mkdirs();
 		}
-		if(!videoDir.exists()) {
+		/*if(!videoDir.exists()) {
 			videoDir.mkdir();
-		}
+		}*/
+		long time = System.currentTimeMillis();
+		dbHelper_ = new DatabaseHelper();
+		dbHelper_.createDatabase(time);
 	}
 
 	protected void onDestroy() {
@@ -174,9 +178,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		}
 		if (mMessageReceiver!= null) {
 			LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+			LocalBroadcastManager.getInstance(this).unregisterReceiver(LMessageReceiver);
 		}
-		sequenceNo =1;
-
 	}
 
 	@Override
@@ -211,13 +214,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 				Log.e(TAG, "OUT OF BUFFER");
 				return;
 			}
-			//Log.d(TAG, "Original data length is: " + String.valueOf(data.length));
 			FrameData frameData = this.encoder.offerEncoder(data);
-			//Log.d(TAG, "after encoder data length is: " + String.valueOf(encData.length));
-			//frameData.originalDataSize = data.length;
-			//frameData.SequenceNo_ = sequenceNo;
 
-			if (frameData.video_.length > 0) {
+			if (frameData.frameData.length > 0) {
 				synchronized (this.encDataList) {
 					this.encDataList.add(frameData);
 				}
@@ -447,14 +446,18 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			String message = intent.getStringExtra("latency");
-			Trace trace = new Trace();
-			trace.fromJson(message);
 
-			Log.d(TAG,"trace frome latency is: "+ message);
+			Gson gson = new Gson();
+			FrameData frameData = gson.fromJson(message, FrameData.class);
+
+
+/*			PrintObj print = new PrintObj();
+			print.printObj(frameData);*/
 			if (dbHelper_.isOpen()) {
-				dbHelper_.insertSensorData(trace);
+				dbHelper_.updateFrameData(frameData);
 			}
 		}
 
 	};
+
 }

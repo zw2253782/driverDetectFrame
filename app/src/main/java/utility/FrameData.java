@@ -1,18 +1,17 @@
 package utility;
 
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class FrameData {
 
-    public long timeStamp_;
-    public long SequenceNo_;
-    public long latency_;
-    public byte[] video_ = null;
+    public long videoSendTime;
+    public long Sequence;
+    public long roundLatency = 0;
+    public byte[] frameData = null;
     public boolean isIFrame = false;
     public long originalDataSize = 0;
     public long compressedDataSize = 0;
+    public long PCtime = 0;
+    public long roundBackTime = 0;
 
     private int subIndex = 0;
     private int subSum = 0;
@@ -20,31 +19,17 @@ public class FrameData {
     public FrameData(){
         //I set the length as 8 digit.
     }
-    public FrameData(long order, byte[] video) {
-        //I set the length as 8 digit.
-        this.SequenceNo_ = order;
-        //this.latency_ = latency;
-        this.video_ = video;
-    }
 
     public FrameData (boolean bool, byte[] data){
-        this.timeStamp_ = System.currentTimeMillis();
+        this.videoSendTime = System.currentTimeMillis();
         this.isIFrame = bool;
-        this.video_ = data;
+        this.frameData = data;
         this.compressedDataSize = data.length;
     }
-    public FrameData(long timeStamp, long order, long latency, long dataLength) {
-        this.timeStamp_ = timeStamp;
-        //I set the length as 8 digit.
-        this.SequenceNo_ = order;
-        this.latency_ = latency;
-        this.compressedDataSize = dataLength;
-    }
-
 
 
     public long getDataSize() {
-        return video_.length;
+        return frameData.length;
     }
 
 /*    public FrameData generateSubFrame(int index) {

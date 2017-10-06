@@ -2,17 +2,11 @@ package database;
 
 
 import android.content.ContentValues;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Environment;
 import android.util.Log;
 
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import utility.Constants;
 import utility.FrameData;
 import utility.Trace;
 
@@ -38,7 +32,7 @@ public class DatabaseHelper {
 
 
     private static final String videoSendTime = "videoSendTime";
-    private static final String sequenceNo = "sequenceNo";
+    private static final String Sequence = "Sequence";
     private static final String roundLatency = "roundLatency";
     private static final String oraginalSize = "oraginalSize";
     private static final String PCtime = "PCtime";
@@ -68,8 +62,8 @@ public class DatabaseHelper {
 
 
     private static final String CREATE_TABLE_LATENCY = "CREATE TABLE IF NOT EXISTS "
-            + TABLE_LATENCY + "(" + KEY_TIME + " INTEGER PRIMARY KEY,"
-            + videoSendTime + " REAL," + sequenceNo + " REAL," +  roundLatency + " REAL,"
+            + TABLE_LATENCY + "(" + Sequence + " INTEGER PRIMARY KEY,"
+            + videoSendTime + " REAL," +  roundLatency + " REAL,"
             + oraginalSize + " REAL," + PCtime + " REAL," +  comDataSize + " REAL,"
             + PCReceivedDataSize + " REAL," + isIFrame + " REAL" + ")";
 
@@ -81,6 +75,7 @@ public class DatabaseHelper {
             + ")";
 
     private boolean opened = false;
+    private boolean databaseCreated = false;
     // public interfaces
     public DatabaseHelper() {
         this.opened = true;
@@ -98,6 +93,7 @@ public class DatabaseHelper {
         db_.execSQL(CREATE_TABLE_GPS);
         db_.execSQL(CREATE_TABLE_ROTATION_MATRIX);
         db_.execSQL(CREATE_TABLE_LATENCY);
+        databaseCreated = true;
     }
 
 
@@ -111,21 +107,29 @@ public class DatabaseHelper {
         return this.opened;
     }
 
-
     public void insertFrameData(FrameData frameData) {
-        ContentValues values = new ContentValues();
-        db_.insert(TABLE_LATENCY, null, values);
+            ContentValues values = new ContentValues();
+            values.put(videoSendTime, frameData.videoSendTime);
+            values.put(Sequence, frameData.Sequence);
+            values.put(roundLatency, frameData.roundLatency);
+            values.put(oraginalSize, frameData.originalDataSize);
+            values.put(PCtime, frameData.PCtime);
+            values.put(comDataSize, frameData.compressedDataSize);
+            values.put(isIFrame, frameData.isIFrame);
+            db_.insert(TABLE_LATENCY, null, values);
+
     }
+
 
     public int updateFrameData(FrameData updatedFrameData) {
         Log.d(TAG, "updateFrameData");
 
         //update information in meta table
         ContentValues data = new ContentValues();
-        data.put("roundLatency", updatedFrameData.latency_);
+        data.put("roundLatency", updatedFrameData.roundLatency);
 
-        String where = "time = ? ";
-        String[] whereArgs = {String.valueOf(updatedFrameData.timeStamp_)};
+        String where = "videoSendTime = ? ";
+        String[] whereArgs = {String.valueOf(updatedFrameData.videoSendTime)};
         return db_.update(TABLE_LATENCY, data, where, whereArgs);
     }
 
@@ -147,22 +151,11 @@ public class DatabaseHelper {
             db_.insert(TABLE_MAGNETOMETER, null, values);
         } else if (type.equals(Trace.GPS)) {
             db_.insert(TABLE_GPS, null, values);
-        } else if (type.equals(Trace.LATENCY)) {
-            ContentValues latencyValue = new ContentValues();
-            latencyValue.put(KEY_TIME, trace.time);
-            latencyValue.put(videoSendTime,trace.videoSendTime);
-            latencyValue.put(sequenceNo,trace.sequenceNo);
-            latencyValue.put(roundLatency,trace.roundLatency);
-            latencyValue.put(oraginalSize,trace.oraginalSize);
-            latencyValue.put(PCtime,trace.PCtime);
-            latencyValue.put(comDataSize,trace.comDataSize);
-            latencyValue.put(PCReceivedDataSize,trace.PCReceivedDataSize);
-            latencyValue.put(isIFrame, trace.isIFrame);
-            db_.insert(TABLE_LATENCY, null, latencyValue);
-        } else {
+        }  else {
             assert 0 == 1;
         }
     }
+
 
 
 

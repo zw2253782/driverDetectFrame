@@ -28,7 +28,9 @@ public class UDPServiceConnection implements ServiceConnection {
         Log.d(TAG, "distconnected");
     }
     public void sendData(FrameData data, InetAddress remoteIPAddress, int remotePort) {
-        binder.sendData(data,  remoteIPAddress, remotePort);
+        if (data != null){
+            binder.sendData(data, remoteIPAddress, remotePort);
+        }
     }
 
 }
