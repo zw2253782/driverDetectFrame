@@ -1,7 +1,8 @@
+gradle.properties
 
-local.properties
+app/build
 
-app/build/*
+
 # Built application files
 *.apk
 *.ap_
