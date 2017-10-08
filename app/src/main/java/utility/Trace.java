@@ -16,22 +16,11 @@ public class Trace implements Serializable {
     public int dim;
     public String type = "none";
 
-
-    public long videoSendTime = 0;
-    public long sequenceNo = 0;
-    public long roundLatency = 0;
-    public long oraginalSize = 0;
-    public boolean isIFrame = false;
-    public long PCtime = 0;
-    public long comDataSize = 0;
-    public long PCReceivedDataSize = 0;
-
-    private static String TAG = "Trace";
+    private static String TAG = Trace.class.getSimpleName();
 
     public static String ACCELEROMETER = "accelerometer";
     public static String GYROSCOPE = "gyroscope";
     public static String MAGNETOMETER = "magnetometer";
-    public static String LATENCY = "latency";
 
     public static String ROTATION_MATRIX = "rotation_matrix";
     public static String GPS = "gps";
@@ -111,40 +100,5 @@ public class Trace implements Serializable {
         }
     }
 
-
-/*
-    public void frameFromString(String json) {
-        StringReader sr = new StringReader(json);
-        JsonReader reader = new JsonReader(sr);
-        try {
-            reader.beginObject();
-            while (reader.hasNext()) {
-                String name = reader.nextName();
-                if (name.equals("videoSendTime")) {
-                    videoSendTime = reader.nextLong();
-                }else if (name.equals("sequenceNo")) {
-                    sequenceNo = reader.nextLong();
-                }else if (name.equals("roundLatency")) {
-                    roundLatency = reader.nextLong();
-                }else if (name.equals("oraginalSize")) {
-                    oraginalSize = reader.nextLong();
-                }else if (name.equals("PCtime")) {
-                    PCtime = reader.nextLong();
-                }else if (name.equals("comDataSize")) {
-                    comDataSize = reader.nextLong();
-                }else if (name.equals("PCReceivedDataSize")) {
-                    PCReceivedDataSize = reader.nextLong();
-                } else if (name.equals("isIFrame")) {
-                    isIFrame = reader.nextBoolean();
-                } else {
-                    reader.skipValue();
-                }
-            }
-            reader.endObject();
-        } catch (Exception e) {
-            Log.d(TAG, "Frame read from string failed");
-        }
-    }
-*/
 
 }

@@ -61,7 +61,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 	SurfaceHolder previewHolder;
 	byte[] previewBuffer;
 	boolean isStreaming = false;
-	boolean isUDPStart = false;
 	AvcEncoder encoder;
 	DatagramSocket udpSocket;
 	public InetAddress address;
@@ -94,14 +93,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 					}
 					continue;
 				}
-				frameData.videoSendTime = System.currentTimeMillis();
+				frameData.setVideoSendTime();
 				if (dbHelper_.isOpen()) {
 					dbHelper_.updateFrameData(frameData);
 					Log.d(TAG,"update sendtime: " + dbHelper_.updateFrameData(frameData));
 				}
 				//we can start 2 thread, one is with time header send to one server and get time back
 				// the other thread will send without header and directly show the video.
-				if (mUDPConnection != null && mUDP != null && isUDPStart) {
+				if (mUDPConnection != null && mUDP != null) {
 					mUDPConnection.sendData(frameData, address, port);
 				}
 
@@ -148,14 +147,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 
 	private void startServices() {
 		startUDPService();
-
 		mSensor = new Intent(this, SensorService.class);
 		startService(mSensor);
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("sensor"));
 		LocalBroadcastManager.getInstance(this).registerReceiver(LMessageReceiver, new IntentFilter("udp"));
 
-
-
+		long time = System.currentTimeMillis();
+		dbHelper_ = new DatabaseHelper();
+		dbHelper_.createDatabase(time);
 	}
 
 	private void setupFolders () {
@@ -167,15 +166,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		/*if(!videoDir.exists()) {
 			videoDir.mkdir();
 		}*/
-		long time = System.currentTimeMillis();
-		dbHelper_ = new DatabaseHelper();
-		dbHelper_.createDatabase(time);
 	}
 
 	protected void onDestroy() {
 		super.onDestroy();
+		stopServices();
+	}
 
-
+	private void stopServices() {
+		stopUDPService();
 		if (mSensor!= null){
 			stopService(mSensor);
 			mSensor = null;
@@ -185,6 +184,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		}
 		if (mMessageReceiver!= null) {
 			LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+		}
+		if (LMessageReceiver!=null) {
 			LocalBroadcastManager.getInstance(this).unregisterReceiver(LMessageReceiver);
 		}
 	}
@@ -223,7 +224,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 			}
 			FrameData frameData = this.encoder.offerEncoder(data);
 			dbHelper_.insertFrameData(frameData);
-			if (frameData.frameData.length > 0) {
+			if (frameData.getDataSize() > 0) {
 				synchronized (this.encDataList) {
 					this.encDataList.add(frameData);
 				}
@@ -340,7 +341,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 			camera.release();
 			camera = null;
 		}
-		stopUDPService();
+		stopServices();
 	}
 
 	private void showStreamDlg() {
@@ -423,7 +424,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		mUDPConnection = new UDPServiceConnection();
 		bindService(mUDP, mUDPConnection, Context.BIND_AUTO_CREATE);
 		startService(mUDP);
-		isUDPStart = true;
 	}
 
 	private void stopUDPService() {
@@ -432,7 +432,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 			stopService(mUDP);
 			mUDP = null;
 			mUDPConnection = null;
-			isUDPStart = false;
 		}
 	}
 
@@ -459,8 +458,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 			Gson gson = new Gson();
 			FrameData frameData = gson.fromJson(message, FrameData.class);
 
-/*			PrintObj print = new PrintObj();
-			print.printObj(frameData);*/
 			if (dbHelper_.isOpen()) {
 				dbHelper_.updateFrameData(frameData);
 				Log.d(TAG,"updateFrameData " + dbHelper_.updateFrameData(frameData));

@@ -10,9 +10,7 @@ import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.os.Bundle;
 
-import database.DatabaseHelper;
 import utility.FrameData;
-import utility.PrintObj;
 
 public class AvcEncoder
 {

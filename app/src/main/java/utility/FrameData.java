@@ -1,16 +1,28 @@
 package utility;
 
 
-public class FrameData {
+import android.text.style.CharacterStyle;
+import android.util.Base64;
+import android.util.Log;
 
-    public long videoSendTime;
+import java.io.Serializable;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
+
+public class FrameData implements Serializable {
+    private static String TAG = FrameData.class.getSimpleName();
+
+    private long videoSendTime;
     public long Sequence;
     public long roundLatency = 0;
-    public byte[] frameData = null;
     public boolean isIFrame = false;
     public long originalDataSize = 0;
     public long compressedDataSize = 0;
     public long PCtime = 0;
+
+    // public byte[] frameData = null;
+    public String frameData;
 
     private int subIndex = 0;
     private int subSum = 0;
@@ -21,12 +33,25 @@ public class FrameData {
     public FrameData (boolean isIFrame, byte[] data){
         this.videoSendTime = System.currentTimeMillis();
         this.isIFrame = isIFrame;
-        this.frameData = data;
+        // this.frameData = data;
         this.compressedDataSize = data.length;
+
+        // this.frameData = new String(data, StandardCharsets.US_ASCII);
+
+
+        this.frameData = Base64.encodeToString(data, 0);
+        Log.d(TAG, data.length + " convert to " + this.frameData.length());
+    }
+
+    public long getVideoSendTime() {
+        return this.videoSendTime;
+    }
+    public void setVideoSendTime() {
+        this.videoSendTime = System.currentTimeMillis();
     }
 
     public long getDataSize() {
-        return frameData.length;
+        return frameData.length();
     }
 
 /*    public FrameData generateSubFrame(int index) {

@@ -37,8 +37,6 @@ public class UDPService extends Service implements Runnable {
     //this IP need to be changed if you change your WiFi connection
     String remoteIPName = "";
     private Boolean UDPThreadRunning = null;
-    long preTime = System.currentTimeMillis()+500;
-    long secondLatency = 0;
 
 
     public class UDPBinder extends Binder {
@@ -92,6 +90,9 @@ public class UDPService extends Service implements Runnable {
         stopSelf();
         UDPThreadRunning = false;
 
+        localSocket.close();
+        localSocket = null;
+
         lockHigh.release();
     }
 
@@ -127,7 +128,7 @@ public class UDPService extends Service implements Runnable {
     private String frameProcess(String frame, long roundBackTime){
         Gson gson = new Gson();
         FrameData frameData = gson.fromJson(frame, FrameData.class);
-        frameData.roundLatency = roundBackTime - frameData.videoSendTime;
+        frameData.roundLatency = roundBackTime - frameData.getVideoSendTime();
 
         Log.d(TAG, gson.toJson(frameData));
 
@@ -137,8 +138,16 @@ public class UDPService extends Service implements Runnable {
     //send data back to UDPClient
     public void send(FrameData sendData, InetAddress remoteIPAddress, int remotePort) {
         Gson gson = new Gson();
-        Log.d(TAG, sendData.frameData.length + " " + String.valueOf(gson.toJson(sendData).length()));
+        //sendData.frameData = "";
+        Log.d(TAG, String.valueOf(sendData.getVideoSendTime()));
+
+        String json = gson.toJson(sendData);
+        Log.d(TAG, sendData.getDataSize() + " " + json.length());
         Log.d(TAG, gson.toJson(sendData));
+
+        FrameData tmp = gson.fromJson(json, FrameData.class);
+        Log.d(TAG, String.valueOf(tmp.getVideoSendTime()));
+
         DatagramPacket sendPacket = new DatagramPacket(gson.toJson(sendData).getBytes(), gson.toJson(sendData).getBytes().length, remoteIPAddress, remotePort);
         //Log.d(TAG,"gson.toJson(sendData) " + gson.toJson(sendData).toString());
         try {

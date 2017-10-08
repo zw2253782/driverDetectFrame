@@ -3,12 +3,11 @@ package database;
 
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.Environment;
 import android.util.Log;
 
 
+import utility.Constants;
 import utility.FrameData;
-import utility.PrintObj;
 import utility.Trace;
 
 
@@ -84,8 +83,7 @@ public class DatabaseHelper {
     //open and close for each trip
     public void createDatabase(long t) {
         this.opened = true;
-        //db_ = SQLiteDatabase.openOrCreateDatabase(Constants.kDBFolder + String.valueOf(t).concat(".db"), null, null);
-        db_ = SQLiteDatabase.openOrCreateDatabase(Environment.getExternalStorageDirectory().getAbsolutePath().toString()+ "/FrameDatabase/" + String.valueOf(t).concat(".db"), null, null);
+        db_ = SQLiteDatabase.openOrCreateDatabase(Constants.kDBFolder + String.valueOf(t).concat(".db"), null, null);
         db_.execSQL(CREATE_TABLE_ACCELEROMETER);
         db_.execSQL(CREATE_TABLE_GYROSCOPE);
         db_.execSQL(CREATE_TABLE_MAGNETOMETER);
@@ -109,7 +107,7 @@ public class DatabaseHelper {
 
     public void insertFrameData(FrameData frameData) {
             ContentValues values = new ContentValues();
-            values.put(videoSendTime, frameData.videoSendTime);
+            values.put(videoSendTime, frameData.getVideoSendTime());
             values.put(Sequence, frameData.Sequence);
             values.put(roundLatency, frameData.roundLatency);
             values.put(oraginalSize, frameData.originalDataSize);
