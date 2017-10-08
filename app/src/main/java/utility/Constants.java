@@ -26,7 +26,7 @@ public class Constants {
 
     public static final String kPackageName = "streaming";
     //public static final String kDBFolder = "/data/data/" + kPackageName + "/databases/";
-    public static final String kDBFolder = Environment.getExternalStorageDirectory().getAbsolutePath().toString()+ "/FrameDatabase/";
+    public static final String kDBFolder = Environment.getExternalStorageDirectory().getAbsolutePath().toString()+ "/databases/";
     public static final String kVideoFolder = "/data/data/" + kPackageName + "/videos/";
 
 }

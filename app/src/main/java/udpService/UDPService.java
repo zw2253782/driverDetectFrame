@@ -31,11 +31,8 @@ public class UDPService extends Service implements Runnable {
     private static final String TAG = "udpService";
     private final Binder binder_ = new UDPService.UDPBinder();
     public DatagramSocket localSocket = null;
-    public InetAddress remoteIPAddress = null;
-    public int remotePort = 5000;
-    public int localPort = 55555;
+    public int localPort = 4444;
     //this IP need to be changed if you change your WiFi connection
-    String remoteIPName = "";
     private Boolean UDPThreadRunning = null;
 
 
@@ -75,11 +72,7 @@ public class UDPService extends Service implements Runnable {
         Log.d(TAG,"Start UDP server");
         try {
             localSocket = new DatagramSocket(localPort);
-            remoteIPAddress = InetAddress.getByName(remoteIPName);
         } catch (SocketException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (UnknownHostException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -113,8 +106,8 @@ public class UDPService extends Service implements Runnable {
 
                 String sentence = new String(receiveData, 0, receivePacket.getLength());
                 //get UDPClient ip and port
-                remoteIPAddress = receivePacket.getAddress();
-                remotePort = receivePacket.getPort();
+                InetAddress remoteIPAddress = receivePacket.getAddress();
+                int remotePort = receivePacket.getPort();
 
                 if (sentence.length()!=0) {
                     sendFrame(frameProcess(sentence,roundBackTime));
@@ -141,14 +134,13 @@ public class UDPService extends Service implements Runnable {
     //send data back to UDPClient
     public void send(FrameData sendData, InetAddress remoteIPAddress, int remotePort) {
         Gson gson = new Gson();
-        Log.d(TAG, String.valueOf(sendData.getVideoSendTime()));
+        String data = gson.toJson(sendData);
+        //Log.d(TAG, String.valueOf(sendData.frameData.length));
 
-        String json = gson.toJson(sendData);
-        Log.d(TAG, sendData.getDataSize() + " " + json.length());
+        //DatagramPacket sendPacket = new DatagramPacket(sendData.frameData, sendData.frameData.length, remoteIPAddress, remotePort);
+        DatagramPacket sendPacket = new DatagramPacket(data.getBytes(), data.getBytes().length, remoteIPAddress, remotePort);
 
 
-        DatagramPacket sendPacket = new DatagramPacket(gson.toJson(sendData).getBytes(), gson.toJson(sendData).getBytes().length, remoteIPAddress, remotePort);
-        //Log.d(TAG,"gson.toJson(sendData) " + gson.toJson(sendData).toString());
         try {
             localSocket.send(sendPacket);
         } catch (IOException e) {
