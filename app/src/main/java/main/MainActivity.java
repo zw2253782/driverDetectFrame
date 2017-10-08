@@ -34,7 +34,7 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.android.application.R;
+import streaming.R;
 import com.google.gson.Gson;
 
 import database.DatabaseHelper;
@@ -62,9 +62,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 	byte[] previewBuffer;
 	boolean isStreaming = false;
 	AvcEncoder encoder;
-	DatagramSocket udpSocket;
+
+	private String ip = "192.168.1.100";
 	public InetAddress address;
-	public int port;
+	public int port = 55555;
+
 	ArrayList<FrameData> encDataList = new ArrayList<FrameData>();
 	ArrayList<Integer> encDataLengthList = new ArrayList<Integer>();
 
@@ -100,7 +102,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 				}
 				//we can start 2 thread, one is with time header send to one server and get time back
 				// the other thread will send without header and directly show the video.
-				if (mUDPConnection != null && mUDP != null) {
+				if (mUDPConnection != null && mUDPService != null && mUDPConnection.isRunning()) {
 					mUDPConnection.sendData(frameData, address, port);
 				}
 
@@ -131,8 +133,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 						if (isStreaming) {
 							((Button) v).setText("Stream");
 							stopStream();
+							stopServices();
 						} else {
-							showStreamDlg();
+							startStream();
+							startServices();
 						}
 					}
 				});
@@ -246,9 +250,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		stopCamera();
 	}
 
-	private void startStream(String ip, int port) {
-
-
+	private void startStream() {
 
 		SharedPreferences sp = this.getPreferences(Context.MODE_PRIVATE);
 		int width = sp.getInt(SP_CAM_WIDTH, 0);
@@ -258,13 +260,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		this.encoder.init(width, height, DEFAULT_FRAME_RATE, DEFAULT_BIT_RATE);
 
 		try {
-			this.udpSocket = new DatagramSocket();
 			this.address = InetAddress.getByName(ip);
-			this.port = port;
-		} catch (SocketException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return;
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -341,47 +337,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 			camera.release();
 			camera = null;
 		}
-		stopServices();
 	}
 
-	private void showStreamDlg() {
-		LayoutInflater inflater = this.getLayoutInflater();
-		View content = inflater.inflate(R.layout.stream_dlg_view, null);
-
-		SharedPreferences sp = this.getPreferences(Context.MODE_PRIVATE);
-		String ip = sp.getString(SP_DEST_IP, "");
-		int port = sp.getInt(SP_DEST_PORT, -1);
-		if (ip.length() > 0) {
-			EditText etIP = (EditText) content.findViewById(R.id.etIP);
-			etIP.setText(ip);
-			EditText etPort = (EditText) content.findViewById(R.id.etPort);
-			etPort.setText(String.valueOf(port));
-		}
-
-		AlertDialog.Builder dlgBld = new AlertDialog.Builder(this);
-		dlgBld.setTitle(R.string.app_name);
-		dlgBld.setView(content);
-		dlgBld.setPositiveButton(android.R.string.ok,
-				new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-
-						EditText etIP = (EditText) ((AlertDialog) dialog).findViewById(R.id.etIP);
-						EditText etPort = (EditText) ((AlertDialog) dialog).findViewById(R.id.etPort);
-						String ip = etIP.getText().toString();
-						int port = Integer.valueOf(etPort.getText().toString());
-						if (ip.length() > 0 && (port >= 0 && port <= 65535)) {
-							startStream(ip, port);
-						} else {
-							//TODO:
-						}
-
-						startServices();
-					}
-				});
-		dlgBld.setNegativeButton(android.R.string.cancel, null);
-		dlgBld.show();
-	}
 
 	private void showSettingsDlg() {
 		Camera.Parameters params = camera.getParameters();
@@ -415,22 +372,22 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 	}
 
 	//initial UDPConnetion
-	private static Intent mUDP = null;
+	private static Intent mUDPService = null;
 	private static UDPServiceConnection mUDPConnection = null;
 
 	private void startUDPService() {
 		Log.d(TAG, "startUDPService");
-		mUDP = new Intent(this, UDPService.class);
+		mUDPService = new Intent(this, UDPService.class);
 		mUDPConnection = new UDPServiceConnection();
-		bindService(mUDP, mUDPConnection, Context.BIND_AUTO_CREATE);
-		startService(mUDP);
+		bindService(mUDPService, mUDPConnection, Context.BIND_AUTO_CREATE);
+		startService(mUDPService);
 	}
 
 	private void stopUDPService() {
-		if (mUDP != null && mUDPConnection != null) {
+		if (mUDPService != null && mUDPConnection != null) {
 			unbindService(mUDPConnection);
-			stopService(mUDP);
-			mUDP = null;
+			stopService(mUDPService);
+			mUDPService = null;
 			mUDPConnection = null;
 		}
 	}

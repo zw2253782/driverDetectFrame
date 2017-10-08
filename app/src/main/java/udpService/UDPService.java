@@ -43,6 +43,9 @@ public class UDPService extends Service implements Runnable {
         public UDPService getService() {
             return UDPService.this;
         }
+        public boolean isRunning() {
+            return UDPThreadRunning;
+        }
         public void sendData(FrameData data, InetAddress remoteIPAddress, int remotePort){
             send(data, remoteIPAddress, remotePort);
         }
@@ -138,15 +141,11 @@ public class UDPService extends Service implements Runnable {
     //send data back to UDPClient
     public void send(FrameData sendData, InetAddress remoteIPAddress, int remotePort) {
         Gson gson = new Gson();
-        //sendData.frameData = "";
         Log.d(TAG, String.valueOf(sendData.getVideoSendTime()));
 
         String json = gson.toJson(sendData);
         Log.d(TAG, sendData.getDataSize() + " " + json.length());
-        Log.d(TAG, gson.toJson(sendData));
 
-        FrameData tmp = gson.fromJson(json, FrameData.class);
-        Log.d(TAG, String.valueOf(tmp.getVideoSendTime()));
 
         DatagramPacket sendPacket = new DatagramPacket(gson.toJson(sendData).getBytes(), gson.toJson(sendData).getBytes().length, remoteIPAddress, remotePort);
         //Log.d(TAG,"gson.toJson(sendData) " + gson.toJson(sendData).toString());
