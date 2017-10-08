@@ -2,6 +2,7 @@ package main;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -57,7 +58,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 	private final static String SP_DEST_IP = "dest_ip";
 	private final static String SP_DEST_PORT = "dest_port";
 
-	private final static int DEFAULT_FRAME_RATE = 1;
+	private final static int DEFAULT_FRAME_RATE = 10;
 	private final static int DEFAULT_BIT_RATE = 500000;
 
 	Camera camera;
@@ -66,7 +67,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 	boolean isStreaming = false;
 	AvcEncoder encoder;
 
-	private String ip = "192.168.1.100";
+	private String ip = "192.168.8.5";
 	public InetAddress address;
 	public int port = 55555;
 
@@ -109,6 +110,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 					mUDPConnection.sendData(frameData, address, port);
 				}
 
+
 				//Log.d(TAG, "send data length is: " + String.valueOf(encData.length));
 			}
 		}
@@ -132,7 +134,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		*/
 
 
-		this.findViewById(R.id.btnCamSize).setOnClickListener(
+		this.findViewById(R.id.btntest).setOnClickListener(
 				new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
@@ -140,7 +142,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 					}
 				});
 
-		this.findViewById(R.id.btnStream).setOnClickListener(
+		this.findViewById(R.id.btnstart).setOnClickListener(
 				new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
@@ -287,8 +289,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		Thread thrd = new Thread(senderRun);
 		thrd.start();
 
-		((Button) this.findViewById(R.id.btnStream)).setText("Stop");
-		this.findViewById(R.id.btnCamSize).setEnabled(false);
+		((Button) this.findViewById(R.id.btnstart)).setText("Stop");
+		this.findViewById(R.id.btntest).setEnabled(false);
 	}
 
 	private void stopStream() {
@@ -298,7 +300,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 			this.encoder.close();
 		this.encoder = null;
 
-		this.findViewById(R.id.btnCamSize).setEnabled(true);
+		this.findViewById(R.id.btntest).setEnabled(true);
 	}
 
 	private void startCamera() {
