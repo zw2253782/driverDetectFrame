@@ -67,11 +67,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 	boolean isStreaming = false;
 	AvcEncoder encoder;
 
-<<<<<<< HEAD
-	private String ip = "192.168.8.5";
-=======
+//	private String ip = "192.168.8.5";
 	private String ip = "192.168.10.101";
->>>>>>> 07adfd4277b8c1bbeb0cbc79b2a0433477eb88bd
+
 	public InetAddress address;
 	public int port = 55555;
 
