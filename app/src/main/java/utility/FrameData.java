@@ -35,11 +35,8 @@ public class FrameData implements Serializable {
         this.isIFrame = isIFrame;
         this.compressedDataSize = data.length;
 
-
         // this.frameData = data;
-
         this.frameData = Base64.encodeToString(data, 0).substring(0, 65000);
-
         //Log.d(TAG, data.length + " convert to " + this.frameData.length());
     }
 

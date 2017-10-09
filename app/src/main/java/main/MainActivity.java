@@ -58,6 +58,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 	private final static String SP_DEST_IP = "dest_ip";
 	private final static String SP_DEST_PORT = "dest_port";
 
+	// skype frame rate 5-30
+	// skype bit rate 30kbps - 950kbps
+	// skype resolution 	640*480, 320*240, 160*120
 	private final static int DEFAULT_FRAME_RATE = 10;
 	private final static int DEFAULT_BIT_RATE = 500000;
 
