@@ -1,6 +1,7 @@
 package main;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -23,6 +24,8 @@ import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.hardware.Camera.PreviewCallback;
 import android.hardware.Camera.Size;
+import android.media.CamcorderProfile;
+import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
@@ -38,7 +41,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 
-import streaming.R;
+import selfdriving.streaming.R;
 import com.google.gson.Gson;
 
 import database.DatabaseHelper;
@@ -50,7 +53,7 @@ import utility.FrameData;
 import utility.Trace;
 
 
-public class MainActivity extends Activity implements SurfaceHolder.Callback, PreviewCallback {
+public class MainActivity extends Activity implements SurfaceHolder.Callback, Camera.PreviewCallback {
 	private final static String TAG = MainActivity.class.getSimpleName();
 
 	private final static String SP_CAM_WIDTH = "cam_width";
@@ -70,8 +73,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 	boolean isStreaming = false;
 	AvcEncoder encoder;
 
+
 //	private String ip = "192.168.8.5";
-	private String ip = "192.168.10.101";
+	private String ip = "192.168.10.102";
 
 	public InetAddress address;
 	public int port = 55555;
@@ -81,46 +85,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 
 
 	private static Intent mSensor = null;
-	public DatabaseHelper dbHelper_ = null;
+	private DatabaseHelper dbHelper_ = null;
+	private FileOutputStream fOut_ = null;
 
-	Runnable senderRun = new Runnable() {
-		@Override
-		public void run() {
-			while (isStreaming) {
-				boolean empty = false;
-				FrameData frameData = null;
-
-				synchronized (encDataList) {
-					if (encDataList.size() == 0) {
-						empty = true;
-					} else
-						frameData = encDataList.remove(0);
-				}
-				if (empty) {
-					try {
-						Thread.sleep(10);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					continue;
-				}
-				frameData.setVideoSendTime();
-				if (dbHelper_.isOpen()) {
-					dbHelper_.updateFrameData(frameData);
-					Log.d(TAG,"update sendtime: " + dbHelper_.updateFrameData(frameData));
-				}
-				//we can start 2 thread, one is with time header send to one server and get time back
-				// the other thread will send without header and directly show the video.
-				if (mUDPConnection != null && mUDPService != null && mUDPConnection.isRunning()) {
-					mUDPConnection.sendData(frameData, address, port);
-				}
-
-
-				//Log.d(TAG, "send data length is: " + String.valueOf(encData.length));
-			}
-		}
-	};
-
+	private int width = 720;
+	private int height = 480;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -162,11 +131,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 					}
 				});
 
+
+		setupFolders();
+
 		SurfaceView svCameraPreview = (SurfaceView) this.findViewById(R.id.svCameraPreview);
 		this.previewHolder = svCameraPreview.getHolder();
 		this.previewHolder.addCallback(this);
-
-		setupFolders();
 
 	}
 
@@ -180,17 +150,24 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		long time = System.currentTimeMillis();
 		dbHelper_ = new DatabaseHelper();
 		dbHelper_.createDatabase(time);
+
+		try {
+			File file = new File(Constants.kVideoFolder.concat(String.valueOf(time)).concat(".h264"));
+			this.fOut_ = new FileOutputStream(file, true);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void setupFolders () {
 		File dbDir = new File(Constants.kDBFolder);
-		//File videoDir = new File(Constants.kVideoFolder);
+		File videoDir = new File(Constants.kVideoFolder);
 		if (!dbDir.exists()) {
 			dbDir.mkdirs();
 		}
-		/*if(!videoDir.exists()) {
+		if(!videoDir.exists()) {
 			videoDir.mkdir();
-		}*/
+		}
 	}
 
 	protected void onDestroy() {
@@ -206,6 +183,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		}
 		if (dbHelper_!= null) {
 			dbHelper_.closeDatabase();
+		}
+		if (fOut_ != null) {
+			try {
+				fOut_.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		if (mMessageReceiver!= null) {
 			LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
@@ -238,24 +222,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		return super.onOptionsItemSelected(item);
 	}
 
-	@Override
-	public void onPreviewFrame(byte[] data, Camera camera) {
-		this.camera.addCallbackBuffer(this.previewBuffer);
-
-		if (this.isStreaming) {
-			if (this.encDataLengthList.size() > 100) {
-				Log.e(TAG, "OUT OF BUFFER");
-				return;
-			}
-			FrameData frameData = this.encoder.offerEncoder(data);
-			dbHelper_.insertFrameData(frameData);
-			if (frameData.getDataSize() > 0) {
-				synchronized (this.encDataList) {
-					this.encDataList.add(frameData);
-				}
-			}
-		}
-	}
 
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
@@ -264,6 +230,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+		Log.d(TAG, "surface changed");
 	}
 
 	@Override
@@ -273,10 +240,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 
 	private void startStream() {
 
+
 		SharedPreferences sp = this.getPreferences(Context.MODE_PRIVATE);
+
+		/*
 		int width = sp.getInt(SP_CAM_WIDTH, 0);
 		int height = sp.getInt(SP_CAM_HEIGHT, 0);
-
+		*/
 		this.encoder = new AvcEncoder();
 		this.encoder.init(width, height, DEFAULT_FRAME_RATE, DEFAULT_BIT_RATE);
 
@@ -296,6 +266,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 
 		((Button) this.findViewById(R.id.btnstart)).setText("Stop");
 		this.findViewById(R.id.btntest).setEnabled(false);
+
+
 	}
 
 	private void stopStream() {
@@ -310,8 +282,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 
 	private void startCamera() {
 		SharedPreferences sp = this.getPreferences(Context.MODE_PRIVATE);
+
+		/*
 		int width = sp.getInt(SP_CAM_WIDTH, 0);
 		int height = sp.getInt(SP_CAM_HEIGHT, 0);
+		*/
+		Log.d(TAG, "width: " + width + " height:" + height);
+
 		if (width == 0) {
 			Camera tmpCam = Camera.open();
 			Camera.Parameters params = tmpCam.getParameters();
@@ -337,6 +314,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		try {
 			camera = Camera.open();
 			camera.setPreviewDisplay(this.previewHolder);
+
 			Camera.Parameters params = camera.getParameters();
 			params.setPreviewSize(width, height);
 			params.setPreviewFormat(ImageFormat.YV12);
@@ -351,6 +329,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		}
 	}
 
+
 	private void stopCamera() {
 		if (camera != null) {
 			camera.setPreviewCallback(null);
@@ -360,6 +339,34 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		}
 	}
 
+	@Override
+	public void onPreviewFrame(byte[] data, Camera camera) {
+		camera.addCallbackBuffer(previewBuffer);
+		Log.d(TAG, "onPreviewFrame");
+		if (isStreaming) {
+			if (encDataLengthList.size() > 100) {
+				Log.e(TAG, "OUT OF BUFFER");
+				return;
+			}
+			FrameData frameData = encoder.offerEncoder(data);
+			dbHelper_.insertFrameData(frameData);
+			if (frameData.getDataSize() > 0) {
+				synchronized (encDataList) {
+					encDataList.add(frameData);
+				}
+			}
+		}
+	}
+
+	private void appendToVideoFile(byte [] data) {
+		try {
+			byte [] header = {'\n', '1', '0', '1', '2', '\n'};
+			this.fOut_.write(header, 0, 6);
+			this.fOut_.write(data, 0, data.length);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	private void showSettingsDlg() {
 		Camera.Parameters params = camera.getParameters();
@@ -443,5 +450,47 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 		}
 
 	};
+
+
+	/**
+	 * push data to sender
+	 */
+	Runnable senderRun = new Runnable() {
+		@Override
+		public void run() {
+			while (isStreaming) {
+				boolean empty = false;
+				FrameData frameData = null;
+
+				synchronized (encDataList) {
+					if (encDataList.size() == 0) {
+						empty = true;
+					} else
+						frameData = encDataList.remove(0);
+				}
+				if (empty) {
+					try {
+						Thread.sleep(10);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					continue;
+				}
+				frameData.setVideoSendTime();
+				if (dbHelper_.isOpen()) {
+					dbHelper_.updateFrameData(frameData);
+					Log.d(TAG,"update sendtime: " + dbHelper_.updateFrameData(frameData));
+				}
+				//we can start 2 thread, one is with time header send to one server and get time back
+				// the other thread will send without header and directly show the video.
+				if (mUDPConnection != null && mUDPService != null && mUDPConnection.isRunning()) {
+					mUDPConnection.sendData(frameData, address, port);
+					appendToVideoFile(frameData.rawFrameData);
+				}
+			}
+		}
+	};
+
+
 
 }

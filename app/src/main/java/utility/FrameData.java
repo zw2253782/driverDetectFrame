@@ -21,7 +21,7 @@ public class FrameData implements Serializable {
     public long compressedDataSize = 0;
     public long PCtime = 0;
 
-    //public byte[] frameData = null;
+    public byte[] rawFrameData = null;
     public String frameData;
 
     private int subIndex = 0;
@@ -35,8 +35,8 @@ public class FrameData implements Serializable {
         this.isIFrame = isIFrame;
         this.compressedDataSize = data.length;
 
-        // this.frameData = data;
-        this.frameData = Base64.encodeToString(data, 0).substring(0, 65000);
+        this.rawFrameData = data;
+        this.frameData = Base64.encodeToString(data, 0);
         //Log.d(TAG, data.length + " convert to " + this.frameData.length());
     }
 

@@ -135,10 +135,10 @@ public class UDPService extends Service implements Runnable {
     public void send(FrameData sendData, InetAddress remoteIPAddress, int remotePort) {
         Gson gson = new Gson();
         String data = gson.toJson(sendData);
-        //Log.d(TAG, String.valueOf(sendData.frameData.length));
+        Log.d(TAG, String.valueOf(sendData.rawFrameData.length));
 
-        //DatagramPacket sendPacket = new DatagramPacket(sendData.frameData, sendData.frameData.length, remoteIPAddress, remotePort);
-        DatagramPacket sendPacket = new DatagramPacket(data.getBytes(), data.getBytes().length, remoteIPAddress, remotePort);
+        DatagramPacket sendPacket = new DatagramPacket(sendData.rawFrameData, sendData.rawFrameData.length, remoteIPAddress, remotePort);
+        //DatagramPacket sendPacket = new DatagramPacket(data.getBytes(), data.getBytes().length, remoteIPAddress, remotePort);
 
 
         try {
