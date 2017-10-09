@@ -152,7 +152,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
 					@Override
 					public void onClick(View v) {
 						if (isStreaming) {
-							((Button) v).setText("Stream");
+							((Button) v).setText("Start");
 							stopStream();
 							stopServices();
 						} else {
