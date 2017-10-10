@@ -33,6 +33,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -88,7 +89,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	private DatabaseHelper dbHelper_ = null;
 	private FileOutputStream fOut_ = null;
 
-	private int width = 720;
+	// width* height = 640 * 480 or 320 * 240
+	private int width = 640;
 	private int height = 480;
 
 	@Override
@@ -97,15 +99,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		this.setContentView(R.layout.activity_main);
 
-		/*
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
 		if (Build.MODEL.equals("Nexus 5X")){
 			//Nexus 5X's screen is reversed, ridiculous! the image sensor does not fit in corrent orientation
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
 		} else {
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 		}
-		*/
 
 
 		this.findViewById(R.id.btntest).setOnClickListener(
@@ -138,6 +138,33 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		this.previewHolder = svCameraPreview.getHolder();
 		this.previewHolder.addCallback(this);
 
+	}
+
+
+	/**
+	 * Keep the orientation of the screen is the same as the captured picture
+	 */
+	private void setCameraDisplayOrientation() {
+		android.hardware.Camera.CameraInfo info =
+				new android.hardware.Camera.CameraInfo();
+		android.hardware.Camera.getCameraInfo(1, info);
+		int rotation = this.getWindowManager().getDefaultDisplay().getRotation();
+		int degrees = 0;
+		switch (rotation) {
+			case Surface.ROTATION_0: degrees = 0; break;
+			case Surface.ROTATION_90: degrees = 90; break;
+			case Surface.ROTATION_180: degrees = 180; break;
+			case Surface.ROTATION_270: degrees = 270; break;
+		}
+
+		int result;
+		if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+			result = (info.orientation + degrees) % 360;
+			result = (360 - result) % 360;  // compensate the mirror
+		} else {  // back-facing
+			result = (info.orientation - degrees + 360) % 360;
+		}
+		camera.setDisplayOrientation(result);
 	}
 
 	private void startServices() {
@@ -226,6 +253,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
 		startCamera();
+
+		setCameraDisplayOrientation();
 	}
 
 	@Override
@@ -360,8 +389,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 	private void appendToVideoFile(byte [] data) {
 		try {
-			byte [] header = {'\n', '1', '0', '1', '2', '\n'};
-			this.fOut_.write(header, 0, 6);
+			int datalen = data.length;
+			String strlen = String.valueOf(datalen);
+			int encodelen = strlen.length();
+			byte [] header = new byte[encodelen + 1];
+			for (int i = 0; i < encodelen; ++ i) {
+				header[i] = (byte)strlen.charAt(i);
+			}
+			header[encodelen] = '\n';
+			this.fOut_.write(header, 0, encodelen + 1);
 			this.fOut_.write(data, 0, data.length);
 		} catch (IOException e) {
 			e.printStackTrace();
