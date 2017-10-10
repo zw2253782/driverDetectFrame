@@ -253,8 +253,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
 		startCamera();
-
-		setCameraDisplayOrientation();
 	}
 
 	@Override
@@ -356,6 +354,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		} catch (RuntimeException e) {
 			//TODO:
 		}
+		setCameraDisplayOrientation();
 	}
 
 
