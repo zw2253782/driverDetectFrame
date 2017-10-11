@@ -126,7 +126,7 @@ public class UDPService extends Service implements Runnable {
         FrameData frameData = gson.fromJson(frame, FrameData.class);
         frameData.roundLatency = roundBackTime - frameData.getVideoSendTime();
 
-        Log.d(TAG, gson.toJson(frameData));
+        // Log.d(TAG, gson.toJson(frameData));
 
         return gson.toJson(frameData);
     }

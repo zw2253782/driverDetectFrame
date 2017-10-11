@@ -65,7 +65,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	// skype frame rate 5-30
 	// skype bit rate 30kbps - 950kbps
 	// skype resolution 	640*480, 320*240, 160*120
-	private final static int DEFAULT_FRAME_RATE = 10;
+	private final static int DEFAULT_FRAME_RATE = 25;
 	private final static int DEFAULT_BIT_RATE = 500000;
 
 	Camera camera;
@@ -90,8 +90,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	private FileOutputStream fOut_ = null;
 
 	// width* height = 640 * 480 or 320 * 240
-	private int width = 640;
-	private int height = 480;
+	private int width = 320;
+	private int height = 240;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
