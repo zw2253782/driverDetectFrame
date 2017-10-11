@@ -179,7 +179,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		dbHelper_.createDatabase(time);
 
 		try {
-			File file = new File(Constants.kVideoFolder.concat(String.valueOf(time)).concat(".h264"));
+			File file = new File(Constants.kVideoFolder.concat(String.valueOf(time)).concat(".raw"));
 			this.fOut_ = new FileOutputStream(file, true);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -370,9 +370,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	@Override
 	public void onPreviewFrame(byte[] data, Camera camera) {
 		camera.addCallbackBuffer(previewBuffer);
-		Log.d(TAG, "onPreviewFrame");
 		if (isStreaming) {
-			if (encDataLengthList.size() > 100) {
+			if (encDataLengthList.size() > 10) {
 				Log.e(TAG, "OUT OF BUFFER");
 				return;
 			}
@@ -505,22 +504,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				}
 				if (empty) {
 					try {
-						Thread.sleep(10);
+						Thread.sleep(1);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
 					continue;
 				}
-				frameData.setVideoSendTime();
-				if (dbHelper_.isOpen()) {
-					dbHelper_.updateFrameData(frameData);
-					Log.d(TAG,"update sendtime: " + dbHelper_.updateFrameData(frameData));
-				}
 				//we can start 2 thread, one is with time header send to one server and get time back
 				// the other thread will send without header and directly show the video.
-				if (mUDPConnection != null && mUDPService != null && mUDPConnection.isRunning()) {
-					mUDPConnection.sendData(frameData, address, port);
+				if (mUDPConnection != null && mUDPConnection.isRunning()) {
 					appendToVideoFile(frameData.rawFrameData);
+					mUDPConnection.sendData(frameData, address, port);
 				}
 			}
 		}

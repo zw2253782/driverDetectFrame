@@ -22,7 +22,6 @@ public class FrameData implements Serializable {
     public long PCtime = 0;
 
     public byte[] rawFrameData = null;
-    public String frameData;
 
     private int subIndex = 0;
     private int subSum = 0;
@@ -36,9 +35,13 @@ public class FrameData implements Serializable {
         this.compressedDataSize = data.length;
 
         this.rawFrameData = data;
-        this.frameData = Base64.encodeToString(data, 0);
         //Log.d(TAG, data.length + " convert to " + this.frameData.length());
     }
+
+    public int getDataSize() {
+        return rawFrameData.length;
+    }
+
 
     public long getVideoSendTime() {
         return this.videoSendTime;
@@ -47,10 +50,6 @@ public class FrameData implements Serializable {
         this.videoSendTime = System.currentTimeMillis();
     }
 
-    public long getDataSize() {
-        return frameData.length();
-        //return frameData.length;
-    }
 
 /*    public FrameData generateSubFrame(int index) {
         FrameData frame = new FrameData();

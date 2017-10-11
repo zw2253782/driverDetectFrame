@@ -132,14 +132,19 @@ public class UDPService extends Service implements Runnable {
     }
 
     //send data back to UDPClient
-    public void send(FrameData sendData, InetAddress remoteIPAddress, int remotePort) {
+    public void send(FrameData frameData, InetAddress remoteIPAddress, int remotePort) {
         Gson gson = new Gson();
-        String data = gson.toJson(sendData);
-        Log.d(TAG, String.valueOf(sendData.rawFrameData.length));
 
-        DatagramPacket sendPacket = new DatagramPacket(sendData.rawFrameData, sendData.rawFrameData.length, remoteIPAddress, remotePort);
-        //DatagramPacket sendPacket = new DatagramPacket(data.getBytes(), data.getBytes().length, remoteIPAddress, remotePort);
+        byte [] body = frameData.rawFrameData;
+        frameData.rawFrameData = null;
+        byte [] header = gson.toJson(frameData).getBytes();
 
+        byte[] payload = new byte[header.length + body.length];
+
+        System.arraycopy(header, 0, payload, 0, header.length);
+        System.arraycopy(body, 0, payload, header.length, body.length);
+
+        DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
 
         try {
             localSocket.send(sendPacket);
