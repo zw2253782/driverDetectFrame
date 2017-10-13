@@ -119,7 +119,7 @@ public class DatabaseHelper {
 
 
     public int updateFrameData(FrameData updatedFrameData) {
-        Log.d(TAG, "updateFrameData");
+        // Log.d(TAG, "updateFrameData");
 
         ContentValues args = new ContentValues();
         args.put(roundLatency, updatedFrameData.roundLatency);

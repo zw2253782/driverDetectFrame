@@ -32,9 +32,11 @@ public class FrameData implements Serializable {
     public FrameData (boolean isIFrame, byte[] data){
         this.videoSendTime = System.currentTimeMillis();
         this.isIFrame = isIFrame;
-        this.compressedDataSize = data.length;
 
         this.rawFrameData = data;
+        // copy the first 65000
+        this.compressedDataSize = this.rawFrameData.length;
+
         //Log.d(TAG, data.length + " convert to " + this.frameData.length());
     }
 

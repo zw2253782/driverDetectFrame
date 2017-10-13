@@ -3,10 +3,7 @@ package main;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,15 +19,11 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
-import android.hardware.Camera.PreviewCallback;
 import android.hardware.Camera.Size;
-import android.media.CamcorderProfile;
-import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Surface;
@@ -38,9 +31,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
 
 import selfdriving.streaming.R;
 import com.google.gson.Gson;
@@ -65,8 +56,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	// skype frame rate 5-30
 	// skype bit rate 30kbps - 950kbps
 	// skype resolution 	640*480, 320*240, 160*120
-	private final static int DEFAULT_FRAME_RATE = 25;
-	private final static int DEFAULT_BIT_RATE = 500000;
+	private final static int DEFAULT_FRAME_RATE = 10;
+	private final static int DEFAULT_BIT_RATE = (int)1e6; // 1mbps
 
 	Camera camera;
 	SurfaceHolder previewHolder;
@@ -90,8 +81,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	private FileOutputStream fOut_ = null;
 
 	// width* height = 640 * 480 or 320 * 240
-	private int width = 320;
-	private int height = 240;
+	private int width = 640;
+	private int height = 480;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -479,7 +470,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 			if (dbHelper_.isOpen()) {
 				dbHelper_.updateFrameData(frameData);
-				Log.d(TAG,"updateFrameData " + dbHelper_.updateFrameData(frameData));
+				// Log.d(TAG,"updateFrameData " + dbHelper_.updateFrameData(frameData));
 			}
 		}
 
