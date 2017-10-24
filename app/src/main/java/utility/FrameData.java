@@ -1,13 +1,6 @@
 package utility;
 
-
-import android.text.style.CharacterStyle;
-import android.util.Base64;
-import android.util.Log;
-
 import java.io.Serializable;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 
 public class FrameData implements Serializable {
