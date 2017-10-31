@@ -1,4 +1,4 @@
-package udpService;
+package services;
 
 import android.app.PendingIntent;
 import android.app.Service;

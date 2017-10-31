@@ -1,9 +1,8 @@
-package udpService;
+package services;
 
 import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import android.support.v4.app.NavUtils;
 import android.util.Log;
 
 import java.net.InetAddress;

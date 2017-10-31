@@ -1,4 +1,4 @@
-package udpService;
+package services;
 
 import android.content.ComponentName;
 import android.content.ServiceConnection;

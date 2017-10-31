@@ -48,7 +48,7 @@
         </activity>
 
         <service
-            android:name="udpService.UDPService"
+            android:name="services.UDPService"
             android:enabled="true"
             android:exported="true"></service>
 

@@ -37,8 +37,8 @@ import selfdriving.streaming.R;
 import com.google.gson.Gson;
 
 import database.DatabaseHelper;
-import udpService.UDPServiceConnection;
-import udpService.UDPService;
+import services.UDPServiceConnection;
+import services.UDPService;
 import sensor.SensorService;
 import utility.Constants;
 import utility.FrameData;

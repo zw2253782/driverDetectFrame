@@ -1,5 +1,5 @@
 
-package udpService;
+package services;
 
 import android.app.Service;
 import android.content.Context;
@@ -12,23 +12,17 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 
-import database.DatabaseHelper;
 import utility.FrameData;
-import utility.Trace;
 
 public class UDPService extends Service implements Runnable {
 
-    private static final String TAG = "udpService";
+    private static final String TAG = "services";
     private final Binder binder_ = new UDPService.UDPBinder();
     public DatagramSocket localSocket = null;
     public int localPort = 4444;
