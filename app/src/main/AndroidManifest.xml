@@ -53,7 +53,7 @@
             android:exported="true"></service>
 
         <service
-            android:name="sensor.SensorService"
+            android:name="services.SensorService"
             android:enabled="true"
             android:exported="false" />
     </application>

@@ -39,7 +39,7 @@ import com.google.gson.Gson;
 import database.DatabaseHelper;
 import services.UDPServiceConnection;
 import services.UDPService;
-import sensor.SensorService;
+import services.SensorService;
 import utility.Constants;
 import utility.FrameData;
 import utility.Trace;

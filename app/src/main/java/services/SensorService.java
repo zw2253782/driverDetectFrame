@@ -1,4 +1,4 @@
-package sensor;
+package services;
 
 import android.app.Service;
 import android.content.Context;
