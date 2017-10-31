@@ -16,7 +16,7 @@ public class AvcEncoder
 {
 	private final static String TAG = AvcEncoder.class.getSimpleName();
 	private final static String MIME_TYPE = "video/avc";
-	private final static int I_FRAME_INTERVAL = 1;
+	private final static int I_FRAME_INTERVAL = 1000;
 	
     MediaCodec mediaCodec;  
     int width;  
@@ -32,8 +32,6 @@ public class AvcEncoder
     int cSize;
     int halfWidth;
     int halfHeight;
-    long sequence = 1;
-
 
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -88,6 +86,10 @@ public class AvcEncoder
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                 MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar);
         mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, I_FRAME_INTERVAL);
+
+        // testing
+        // MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR
+        mediaFormat.setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR);
           
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);  
         mediaCodec.start();  
@@ -100,8 +102,8 @@ public class AvcEncoder
         {  
             mediaCodec.stop();  
             mediaCodec.release();
-            sequence = 1;
 
+            FrameData.sequence = 0;
         }
         catch (Exception e)
         {   
@@ -173,11 +175,8 @@ public class AvcEncoder
         }  
         byte[] ret = outputStream.toByteArray();
         outputStream.reset();
-        FrameData frameData = new FrameData(isIframe,ret);
-        frameData.originalDataSize = input.length;
-        frameData.Sequence = sequence;
-        frameData.compressedDataSize = ret.length;
-        sequence ++;
+
+        FrameData frameData = new FrameData(isIframe,ret, input.length);
 
         return frameData;
     }

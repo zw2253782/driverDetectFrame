@@ -358,6 +358,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		}
 	}
 
+	/**
+	 * we cannot store the video when we use onPreviewFrame
+	 * @param data
+	 * @param camera
+	 */
 	@Override
 	public void onPreviewFrame(byte[] data, Camera camera) {
 		camera.addCallbackBuffer(previewBuffer);
@@ -366,6 +371,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				Log.e(TAG, "OUT OF BUFFER");
 				return;
 			}
+			/*
+			if (FrameData.sequence%2 == 0) {
+				encoder.forceIFrame();
+			}
+			*/
 			FrameData frameData = encoder.offerEncoder(data);
 			dbHelper_.insertFrameData(frameData);
 			if (frameData.getDataSize() > 0) {

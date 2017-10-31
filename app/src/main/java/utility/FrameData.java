@@ -1,5 +1,7 @@
 package utility;
 
+import android.util.Log;
+
 import java.io.Serializable;
 
 
@@ -15,22 +17,21 @@ public class FrameData implements Serializable {
     public long PCtime = 0;
 
     public byte[] rawFrameData = null;
+    public static long sequence = 0;
 
-    private int subIndex = 0;
-    private int subSum = 0;
 
-    public FrameData(){
-    }
-
-    public FrameData (boolean isIFrame, byte[] data){
+    public FrameData (boolean isIFrame, byte[] data, int originalSize){
         this.videoSendTime = System.currentTimeMillis();
         this.isIFrame = isIFrame;
 
         this.rawFrameData = data;
         // copy the first 65000
         this.compressedDataSize = this.rawFrameData.length;
+        this.originalDataSize = originalSize;
+        this.Sequence = FrameData.sequence ++;
 
-        //Log.d(TAG, data.length + " convert to " + this.frameData.length());
+        double compressRatio = this.compressedDataSize * 100.0/this.originalDataSize;
+        Log.d(TAG, this.Sequence + ", I:" + this.isIFrame + "," + "ratio:" + String.format("%.2f", compressRatio) + ",size:" + this.compressedDataSize);
     }
 
     public int getDataSize() {
@@ -40,9 +41,6 @@ public class FrameData implements Serializable {
 
     public long getVideoSendTime() {
         return this.videoSendTime;
-    }
-    public void setVideoSendTime() {
-        this.videoSendTime = System.currentTimeMillis();
     }
 
 
