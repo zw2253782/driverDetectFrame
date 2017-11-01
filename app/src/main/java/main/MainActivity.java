@@ -135,32 +135,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	}
 
 
-	/**
-	 * Keep the orientation of the screen is the same as the captured picture
-	 */
-	private void setCameraDisplayOrientation() {
-		android.hardware.Camera.CameraInfo info =
-				new android.hardware.Camera.CameraInfo();
-		android.hardware.Camera.getCameraInfo(1, info);
-		int rotation = this.getWindowManager().getDefaultDisplay().getRotation();
-		int degrees = 0;
-		switch (rotation) {
-			case Surface.ROTATION_0: degrees = 0; break;
-			case Surface.ROTATION_90: degrees = 90; break;
-			case Surface.ROTATION_180: degrees = 180; break;
-			case Surface.ROTATION_270: degrees = 270; break;
-		}
-
-		int result;
-		if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-			result = (info.orientation + degrees) % 360;
-			result = (360 - result) % 360;  // compensate the mirror
-		} else {  // back-facing
-			result = (info.orientation - degrees + 360) % 360;
-		}
-		camera.setDisplayOrientation(result);
-	}
-
 	private void startServices() {
 		startSerialService();
 		startUDPService();
@@ -343,12 +317,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			camera.addCallbackBuffer(previewBuffer);
 			camera.setPreviewCallbackWithBuffer(this);
 			camera.startPreview();
+
+			// adjust the orientation
+			camera.setDisplayOrientation(0);
 		} catch (IOException e) {
 			//TODO:
 		} catch (RuntimeException e) {
 			//TODO:
 		}
-		setCameraDisplayOrientation();
 	}
 
 
@@ -416,10 +392,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		}
 		choiceItems.toArray(choiceStrItems);
 
-		AlertDialog.Builder dlgBld = new AlertDialog.Builder(this);
-		dlgBld.setTitle(R.string.app_name);
-		dlgBld.setSingleChoiceItems(choiceStrItems, 0, null);
-		dlgBld.setPositiveButton(android.R.string.ok,
+		AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+		alertDialog.setTitle(R.string.app_name);
+		alertDialog.setSingleChoiceItems(choiceStrItems, 0, null);
+		alertDialog.setPositiveButton(android.R.string.ok,
 				new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
@@ -433,8 +409,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 						startCamera();
 					}
 				});
-		dlgBld.setNegativeButton(android.R.string.cancel, null);
-		dlgBld.show();
+		alertDialog.setNegativeButton(android.R.string.cancel, null);
+		alertDialog.show();
 	}
 
 	//initial UDPConnetion
