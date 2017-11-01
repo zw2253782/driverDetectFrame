@@ -8,6 +8,7 @@ import java.io.Serializable;
 public class FrameData implements Serializable {
     private static String TAG = FrameData.class.getSimpleName();
 
+    public String type;
     private long videoSendTime;
     public long Sequence;
     public long roundLatency = 0;
@@ -21,6 +22,7 @@ public class FrameData implements Serializable {
 
 
     public FrameData (boolean isIFrame, byte[] data, int originalSize){
+        this.type = "frame_data_from_car";
         this.videoSendTime = System.currentTimeMillis();
         this.isIFrame = isIFrame;
 
@@ -31,7 +33,7 @@ public class FrameData implements Serializable {
         this.Sequence = FrameData.sequence ++;
 
         double compressRatio = this.compressedDataSize * 100.0/this.originalDataSize;
-        Log.d(TAG, this.Sequence + ", I:" + this.isIFrame + "," + "ratio:" + String.format("%.2f", compressRatio) + ",size:" + this.compressedDataSize);
+        //Log.d(TAG, this.Sequence + ", I:" + this.isIFrame + "," + "ratio:" + String.format("%.2f", compressRatio) + ",size:" + this.compressedDataSize);
     }
 
     public int getDataSize() {

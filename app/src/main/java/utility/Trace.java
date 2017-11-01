@@ -60,7 +60,7 @@ public class Trace implements Serializable {
         try {
             writer.beginObject();
             writer.name("type").value(type);
-            writer.name("time").value(time);
+            writer.name("timeStamp").value(time);
             writer.name("dim").value(dim);
             for (int i = 0; i < dim; ++i) {
                 writer.name("x" + String.valueOf(i)).value(values[i]);
@@ -82,7 +82,7 @@ public class Trace implements Serializable {
                 String name = reader.nextName();
                 if (name.equals("type")) {
                     type = reader.nextString();
-                } else if (name.equals("time")) {
+                } else if (name.equals("timeStamp")) {
                     time = reader.nextLong();
                 } else if (name.equals("dim")) {
                     dim = reader.nextInt();

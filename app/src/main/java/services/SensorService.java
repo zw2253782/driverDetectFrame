@@ -54,7 +54,7 @@ public class SensorService extends Service implements SensorEventListener, Locat
 
     @Override
     public void onLocationChanged(Location location) {
-        //Log.d(TAG, "location update speed:" + String.valueOf(location.getSpeed()));
+        //Log.d(TAG, "location update throttle:" + String.valueOf(location.getSpeed()));
         // TODO Auto-generated method stub
         if(location != null){
             Trace trace = new Trace(3);
@@ -129,7 +129,7 @@ public class SensorService extends Service implements SensorEventListener, Locat
             sendTrace(trace);
 
         } else if (type == Sensor.TYPE_GYROSCOPE && (time - tLastGyroscope) >= Constants.kRecordingInterval) {
-            //Log.e(TAG, tLastGyroscope + "," + time + "," + String.valueOf(time - tLastGyroscope));
+            //Log.e(TAG, tLastGyroscope + "," + timeStamp + "," + String.valueOf(timeStamp - tLastGyroscope));
 
             tLastGyroscope = time;
 
@@ -182,7 +182,7 @@ public class SensorService extends Service implements SensorEventListener, Locat
         public SensorService getService() {
             return SensorService.this;
         }
-        public double getSpeed() {return speed_;}
+        public double getSpeed() {return throttle;}
     }
     */
 

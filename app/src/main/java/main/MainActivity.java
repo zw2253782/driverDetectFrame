@@ -37,11 +37,14 @@ import selfdriving.streaming.R;
 import com.google.gson.Gson;
 
 import database.DatabaseHelper;
+import services.SerialPortConnection;
+import services.SerialPortService;
 import services.UDPServiceConnection;
 import services.UDPService;
 import services.SensorService;
 import utility.Constants;
 import utility.FrameData;
+import utility.SerialReading;
 import utility.Trace;
 
 
@@ -67,7 +70,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 
 //	private String ip = "192.168.8.5";
-	private String ip = "192.168.10.102";
+	private String ip = "192.168.8.20";
 
 	public InetAddress address;
 	public int port = 55555;
@@ -159,11 +162,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	}
 
 	private void startServices() {
+		startSerialService();
 		startUDPService();
 		mSensor = new Intent(this, SensorService.class);
 		startService(mSensor);
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("sensor"));
-		LocalBroadcastManager.getInstance(this).registerReceiver(LMessageReceiver, new IntentFilter("udp"));
+		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("udp"));
+		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("control"));
 
 		long time = System.currentTimeMillis();
 		dbHelper_ = new DatabaseHelper();
@@ -195,6 +200,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 	private void stopServices() {
 		stopUDPService();
+		stopSerialService();
 		if (mSensor!= null){
 			stopService(mSensor);
 			mSensor = null;
@@ -211,9 +217,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		}
 		if (mMessageReceiver!= null) {
 			LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
-		}
-		if (LMessageReceiver!=null) {
-			LocalBroadcastManager.getInstance(this).unregisterReceiver(LMessageReceiver);
 		}
 	}
 
@@ -455,33 +458,77 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		}
 	}
 
+	//initial SerialPortConnection
+	private static Intent mSerial = null;
+	private static SerialPortConnection mSerialPortConnection = null;
 
-	private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			String message = intent.getStringExtra("trace");
-			Trace trace = new Trace();
-			trace.fromJson(message);
+	private void startSerialService() {
+		Log.d(TAG, "start serial service");
+		mSerial = new Intent(this, SerialPortService.class);
+		mSerialPortConnection = new SerialPortConnection();
+		bindService(mSerial, mSerialPortConnection, Context.BIND_AUTO_CREATE);
+		startService(mSerial);
+	}
 
-			if (dbHelper_.isOpen()) {
-				dbHelper_.insertSensorData(trace);
-			}
+	private void stopSerialService() {
+
+		Log.d(TAG, "stop serial service");
+		if(mSerial != null && mSerialPortConnection != null) {
+			mSerialPortConnection.sendCommandFunction("throttle(0.0)");
+			mSerialPortConnection.sendCommandFunction("steering(0.5)");
+
+			unbindService(mSerialPortConnection);
+			stopService(mSerial);
+			mSerial = null;
+			mSerialPortConnection = null;
 		}
+	}
 
-	};
 
-	private BroadcastReceiver LMessageReceiver = new BroadcastReceiver() {
+	private BroadcastReceiver mMessageReceiver = new BroadcastReceiver(){
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			String message = intent.getStringExtra("latency");
 
-			Gson gson = new Gson();
-			FrameData frameData = gson.fromJson(message, FrameData.class);
+			if (intent.getAction().equals("sensor")) {
+				String message = intent.getStringExtra("trace");
+				Trace trace = new Trace();
+				trace.fromJson(message);
 
-			if (dbHelper_.isOpen()) {
-				dbHelper_.updateFrameData(frameData);
-				// Log.d(TAG,"updateFrameData " + dbHelper_.updateFrameData(frameData));
+				if (dbHelper_.isOpen()) {
+					dbHelper_.insertSensorData(trace);
+				}
+				// Log.d(TAG, "sensor data: " + message);
+			} else if(intent.getAction().equals("udp")) {
+				String message = intent.getStringExtra("latency");
+
+				Gson gson = new Gson();
+				FrameData frameData = gson.fromJson(message, FrameData.class);
+
+				if (dbHelper_.isOpen()) {
+					dbHelper_.updateFrameData(frameData);
+				}
+				// Log.d(TAG, "frame data: " + message);
+
+			} else if (intent.getAction().equals("control")){
+				String receivedCommand = intent.getStringExtra("control");
+				Gson gson = new Gson();
+				Log.d(TAG,"control: " + receivedCommand);
+				SerialReading controller = gson.fromJson(receivedCommand,SerialReading.class);
+				if (controller != null) {
+					double throttle = (float)0.0;
+					double steering = controller.steering;
+					if(controller.throttle > 0.5) {
+						throttle = (float) ((controller.throttle-0.5) * 0.4 + 1.0);
+					}
+					mSerialPortConnection.sendCommandFunction("throttle(" + String.valueOf(throttle) + ")");
+					mSerialPortConnection.sendCommandFunction("steering(" + String.valueOf(steering) + ")");
+				}
+				//send to UDP remote host that the command is successful
+			} else {
+				Log.d(TAG, "unknown intent: " + intent.getAction());
 			}
+
+
 		}
 
 	};
@@ -511,7 +558,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 					}
 					continue;
 				}
-				//we can start 2 thread, one is with time header send to one server and get time back
+				//we can start 2 thread, one is with timeStamp header send to one server and get timeStamp back
 				// the other thread will send without header and directly show the video.
 				if (mUDPConnection != null && mUDPConnection.isRunning()) {
 					appendToVideoFile(frameData.rawFrameData);

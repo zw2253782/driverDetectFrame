@@ -37,10 +37,10 @@ import utility.SerialReading;
  * rotation(0.4): left slightly
  * rotation(0.6): right slighly
  *
- * speed    (0.0)1.0 -  1.2
+ * throttle    (0.0)1.0 -  1.2
  * 0.0 is stop
- * 1.0 is starting to move, lowest speed
- * 1.2 is the assigned highest (can be higher) speed
+ * 1.0 is starting to move, lowest throttle
+ * 1.2 is the assigned highest (can be higher) throttle
  */
 public class SerialPortService extends Service implements Runnable {
 
@@ -63,6 +63,7 @@ public class SerialPortService extends Service implements Runnable {
         public SerialPortService getService() {
             return SerialPortService.this;
         }
+        //public int sendCommand(String cmd) {
         public int sendCommand(String cmd) {
             if (serialPort != null) {
                 cmd += "\n";
@@ -235,7 +236,7 @@ public class SerialPortService extends Service implements Runnable {
             Log.d(TAG, "Speed of this rotation is " + String.valueOf(speed));
 
             long time = System.currentTimeMillis();
-            //sendSerialMessage(speed,rotationNumber, time);
+            //sendSerialMessage(throttle,rotationNumber, timeStamp);
         } else if(data.contains("time")) {
             int s = data.indexOf('(');
             int e = data.indexOf(')');
@@ -247,7 +248,7 @@ public class SerialPortService extends Service implements Runnable {
         }
     }
 
-    //calculate the average speed for each rotation
+    //calculate the average throttle for each rotation
     private double calculateSpeed(int rotation){;
         double currenttime= System.currentTimeMillis();
         double speed = 1000.00/(currenttime-previousTime);
@@ -255,7 +256,7 @@ public class SerialPortService extends Service implements Runnable {
         return speed;
     }
 
-    //send the Halldata(current rotation number and speed) to main
+    //send the Halldata(current rotation number and throttle) to main
     private void sendSerialMessage(double speed, int rotation, long time) {
 
         SerialReading obj = new SerialReading(speed, rotation, time);

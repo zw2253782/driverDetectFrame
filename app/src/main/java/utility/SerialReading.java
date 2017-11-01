@@ -6,13 +6,15 @@ package utility;
 
 //make obj for sending HallData
 public class SerialReading {
-    public double speed_;
-    public int rotation_;
-    public long time_;
+    public String type;
+    public double throttle;
+    public double steering;
+    public long timeStamp;
 
-    public SerialReading(double speed, int rotation, long time){
-        this.speed_ = speed;
-        this.rotation_ = rotation;
-        this.time_ = time;
+    public SerialReading(double throttle, double steering, long timeStamp){
+        //this.type = type;
+        this.throttle = throttle;
+        this.steering = steering;
+        this.timeStamp = timeStamp;
     }
 }

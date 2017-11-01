@@ -19,10 +19,12 @@ import java.net.InetAddress;
 import java.net.SocketException;
 
 import utility.FrameData;
+import utility.JsonWraper;
+import utility.SerialReading;
 
 public class UDPService extends Service implements Runnable {
 
-    private static final String TAG = "services";
+    private static final String TAG = "UDPservices";
     private final Binder binder_ = new UDPService.UDPBinder();
     public DatagramSocket localSocket = null;
     public int localPort = 4444;
@@ -90,21 +92,31 @@ public class UDPService extends Service implements Runnable {
     public void run() {
         // TODO Auto-generated method stub
         Log.d(TAG, "start receiving thread");
-        byte[] receiveData = new byte[65555];
+        byte[] buffer = new byte[65555];
         UDPThreadRunning = true;
         while (UDPThreadRunning.booleanValue()) {
-            DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+            DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
+            Log.d(TAG, "received data");
+
             try {
                 localSocket.receive(receivePacket);
-                long roundBackTime = System.currentTimeMillis();
 
-                String sentence = new String(receiveData, 0, receivePacket.getLength());
+                String receivedData = new String(buffer, 0, receivePacket.getLength());
+                //Log.d(TAG,receivedData);
                 //get UDPClient ip and port
                 InetAddress remoteIPAddress = receivePacket.getAddress();
                 int remotePort = receivePacket.getPort();
 
-                if (sentence.length()!=0) {
-                    sendFrame(frameProcess(sentence,roundBackTime));
+                if (receivedData.length()!=0) {
+                    Gson gson = new Gson();
+                    JsonWraper jsonWraper = gson.fromJson(receivedData, JsonWraper.class);
+                    if (jsonWraper.type.compareTo("frame_data_from_server") == 0) {
+                        processFrameData(receivedData);
+                    } else if (jsonWraper.type.compareTo("control_message_from_server") == 0) {
+                        processControllerData(receivedData);
+                    } else {
+                        Log.d(TAG,"unknow data type: " + jsonWraper.type);
+                    }
                 }
 
             } catch (IOException e) {
@@ -114,15 +126,12 @@ public class UDPService extends Service implements Runnable {
         }
     }
 
-    //process data
-    private String frameProcess(String frame, long roundBackTime){
-        Gson gson = new Gson();
-        FrameData frameData = gson.fromJson(frame, FrameData.class);
-        frameData.roundLatency = roundBackTime - frameData.getVideoSendTime();
+    //parse controller data
+    private void processControllerData(String controllerData){
 
-        // Log.d(TAG, gson.toJson(frameData));
-
-        return gson.toJson(frameData);
+        Intent intent = new Intent("control");
+        intent.putExtra("control", controllerData);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     //send data back to UDPClient
@@ -149,9 +158,13 @@ public class UDPService extends Service implements Runnable {
     }
 
     //send received frame data to main
-    private void sendFrame(String frameData) {
+    private void processFrameData(String frame) {
+        Gson gson = new Gson();
+        FrameData frameData = gson.fromJson(frame, FrameData.class);
+        frameData.roundLatency = System.currentTimeMillis() - frameData.getVideoSendTime();
+        Log.d(TAG, gson.toJson(frameData));
         Intent intent = new Intent("udp");
-        intent.putExtra("latency", frameData);
+        intent.putExtra("latency", gson.toJson(frameData));
 
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
