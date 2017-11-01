@@ -488,9 +488,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			} else if (intent.getAction().equals("control")){
 				String receivedCommand = intent.getStringExtra("control");
 				Gson gson = new Gson();
-				Log.d(TAG,"control: " + receivedCommand);
+				// Log.d(TAG,"control: " + receivedCommand);
 				SerialReading controller = gson.fromJson(receivedCommand,SerialReading.class);
-				if (controller != null) {
+				if (controller != null && mSerialPortConnection != null) {
 					double throttle = (float)0.0;
 					double steering = controller.steering;
 					if(controller.throttle > 0.5) {

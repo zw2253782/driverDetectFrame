@@ -96,7 +96,7 @@ public class UDPService extends Service implements Runnable {
         UDPThreadRunning = true;
         while (UDPThreadRunning.booleanValue()) {
             DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
-            Log.d(TAG, "received data");
+            // Log.d(TAG, "received data");
 
             try {
                 localSocket.receive(receivePacket);
@@ -122,8 +122,10 @@ public class UDPService extends Service implements Runnable {
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
+                break;
             }
         }
+        Log.d(TAG, "stop UDP receiving thread");
     }
 
     //parse controller data
@@ -162,7 +164,7 @@ public class UDPService extends Service implements Runnable {
         Gson gson = new Gson();
         FrameData frameData = gson.fromJson(frame, FrameData.class);
         frameData.roundLatency = System.currentTimeMillis() - frameData.getVideoSendTime();
-        Log.d(TAG, gson.toJson(frameData));
+        // Log.d(TAG, gson.toJson(frameData));
         Intent intent = new Intent("udp");
         intent.putExtra("latency", gson.toJson(frameData));
 
