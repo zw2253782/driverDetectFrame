@@ -150,7 +150,9 @@ public class UDPService extends Service implements Runnable {
         DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
 
         try {
-            localSocket.send(sendPacket);
+            if (localSocket != null) {
+                localSocket.send(sendPacket);
+            }
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

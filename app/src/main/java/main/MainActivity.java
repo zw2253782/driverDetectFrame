@@ -69,7 +69,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	AvcEncoder encoder;
 
 
-//	private String ip = "192.168.8.5";
 	private String ip = "192.168.8.20";
 
 	public InetAddress address;
@@ -95,7 +94,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 
 		if (Build.MODEL.equals("Nexus 5X")){
-			//Nexus 5X's screen is reversed, ridiculous! the image sensor does not fit in corrent orientation
+			//Nexus 5X's screen is reversed, ridiculous! the image sensor does not fit in correct orientation
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
 		} else {
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
@@ -106,7 +105,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						showSettingsDlg();
+						Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+						startActivity(intent);
 					}
 				});
 
@@ -233,15 +233,24 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		stopCamera();
 	}
 
+
+	private void loadPreferences() {
+		List<Integer> resolution = SettingsActivity.getResolution(MainActivity.this);
+		this.width = resolution.get(0);
+		this.height = resolution.get(1);
+
+		this.ip = SettingsActivity.getRemoteIP(MainActivity.this);
+		Log.d(TAG, "Resolution:" + this.width + "x" + this.height);
+	}
+
+
 	private void startStream() {
 
+		loadPreferences();
 
-		SharedPreferences sp = this.getPreferences(Context.MODE_PRIVATE);
+		stopCamera();
+		startCamera();
 
-		/*
-		int width = sp.getInt(SP_CAM_WIDTH, 0);
-		int height = sp.getInt(SP_CAM_HEIGHT, 0);
-		*/
 		this.encoder = new AvcEncoder();
 		this.encoder.init(width, height, DEFAULT_FRAME_RATE, DEFAULT_BIT_RATE);
 
@@ -252,8 +261,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			e.printStackTrace();
 			return;
 		}
-		sp.edit().putString(SP_DEST_IP, ip).commit();
-		sp.edit().putInt(SP_DEST_PORT, port).commit();
 
 		this.isStreaming = true;
 		Thread thrd = new Thread(senderRun);
@@ -276,26 +283,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	}
 
 	private void startCamera() {
-		SharedPreferences sp = this.getPreferences(Context.MODE_PRIVATE);
 
-		/*
-		int width = sp.getInt(SP_CAM_WIDTH, 0);
-		int height = sp.getInt(SP_CAM_HEIGHT, 0);
-		*/
+
 		Log.d(TAG, "width: " + width + " height:" + height);
 
-		if (width == 0) {
-			Camera tmpCam = Camera.open();
-			Camera.Parameters params = tmpCam.getParameters();
-			final List<Size> prevSizes = params.getSupportedPreviewSizes();
-			int i = prevSizes.size() - 1;
-			width = prevSizes.get(i).width;
-			height = prevSizes.get(i).height;
-			sp.edit().putInt(SP_CAM_WIDTH, width).commit();
-			sp.edit().putInt(SP_CAM_HEIGHT, height).commit();
-			tmpCam.release();
-			tmpCam = null;
-		}
 
 		this.previewHolder.setFixedSize(width, height);
 
@@ -382,36 +373,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		}
 	}
 
-	private void showSettingsDlg() {
-		Camera.Parameters params = camera.getParameters();
-		final List<Size> prevSizes = params.getSupportedPreviewSizes();
-		String[] choiceStrItems = new String[prevSizes.size()];
-		ArrayList<String> choiceItems = new ArrayList<String>();
-		for (Size s : prevSizes) {
-			choiceItems.add(s.width + "x" + s.height);
-		}
-		choiceItems.toArray(choiceStrItems);
-
-		AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
-		alertDialog.setTitle(R.string.app_name);
-		alertDialog.setSingleChoiceItems(choiceStrItems, 0, null);
-		alertDialog.setPositiveButton(android.R.string.ok,
-				new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						int pos = ((AlertDialog) dialog).getListView().getCheckedItemPosition();
-						Size s = prevSizes.get(pos);
-						SharedPreferences sp = MainActivity.this.getPreferences(Context.MODE_PRIVATE);
-						sp.edit().putInt(SP_CAM_WIDTH, s.width).commit();
-						sp.edit().putInt(SP_CAM_HEIGHT, s.height).commit();
-
-						stopCamera();
-						startCamera();
-					}
-				});
-		alertDialog.setNegativeButton(android.R.string.cancel, null);
-		alertDialog.show();
-	}
 
 	//initial UDPConnetion
 	private static Intent mUDPService = null;
