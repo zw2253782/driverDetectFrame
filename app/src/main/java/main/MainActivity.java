@@ -51,16 +51,12 @@ import utility.Trace;
 public class MainActivity extends Activity implements SurfaceHolder.Callback, Camera.PreviewCallback {
 	private final static String TAG = MainActivity.class.getSimpleName();
 
-	private final static String SP_CAM_WIDTH = "cam_width";
-	private final static String SP_CAM_HEIGHT = "cam_height";
-	private final static String SP_DEST_IP = "dest_ip";
-	private final static String SP_DEST_PORT = "dest_port";
-
 	// skype frame rate 5-30
 	// skype bit rate 30kbps - 950kbps
 	// skype resolution 	640*480, 320*240, 160*120
 	private final static int DEFAULT_FRAME_RATE = 10;
 	private final static int DEFAULT_BIT_RATE = (int)1e6; // 1mbps
+	// 0.5mbps 1mpbs 1.5mpbs 2mbps 2.5mbps 3mbps
 
 	Camera camera;
 	SurfaceHolder previewHolder;
@@ -72,7 +68,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	private String ip = "192.168.8.20";
 
 	public InetAddress address;
-	public int port = 55555;
+	public final int port = 55555;
 
 	ArrayList<FrameData> encDataList = new ArrayList<FrameData>();
 	ArrayList<Integer> encDataLengthList = new ArrayList<Integer>();

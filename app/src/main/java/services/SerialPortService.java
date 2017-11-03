@@ -73,10 +73,8 @@ public class SerialPortService extends Service implements Runnable {
                 } else {
                     serialPort.write(cmd.getBytes());
                 }
-                Log.d(TAG, "res:" + res + ", sending:" + cmd);
                 return res;
             } else {
-                Log.e(TAG, cmd + " serialPort is null");
                 return -1;
             }
         }
