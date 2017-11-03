@@ -16,4 +16,10 @@
         android:key="pref_resolution"
         />
 
+    <ListPreference
+        android:title="Supported Bitrate"
+        android:summary="Select the resolution"
+        android:key="pref_bitrate"
+        />
+
 </PreferenceScreen>

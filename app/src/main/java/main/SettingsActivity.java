@@ -14,6 +14,7 @@ import android.provider.Settings;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.util.LongSparseArray;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -28,7 +29,7 @@ import static java.lang.String.valueOf;
 
 
 public class SettingsActivity extends AppCompatActivity {
-    private String TAG = "SettingActivity";
+    private static String TAG = "SettingActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,6 +78,22 @@ public class SettingsActivity extends AppCompatActivity {
 
     /**
      *
+     * @param context
+     * @return
+     */
+    public static List<Double> getBitRate(Context context) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+        String bitRate = sharedPref.getString("pref_bitrate", "1.0 mbps");
+
+        String numbers[]= bitRate.split(" ", 2);
+        List<Double> res = new ArrayList<Double>();
+        res.add(Double.valueOf(numbers[0]));
+        Log.d(TAG,"bit rate:" + res);
+        return res;
+    }
+
+    /**
+     *
      */
     public static class SettingsFragment extends PreferenceFragment {
         private String TAG = "SettingFragment";
@@ -87,7 +104,7 @@ public class SettingsActivity extends AppCompatActivity {
 
             generateResolutionPreference();
             generateLocalIP();
-
+            generateBitRate();
         }
 
         private void generateLocalIP() {
@@ -120,6 +137,47 @@ public class SettingsActivity extends AppCompatActivity {
                     ipPref.setSummary(newValue.toString());
                     ipPref.setText(newValue.toString());
                     ipPref.setDefaultValue(newValue);
+                    return true;
+                }
+            });
+        }
+
+
+        private void generateBitRate() {
+            double [] rates = {0.5, 1.0, 1.5, 2.0, 2.5, 3.0};
+            CharSequence[] choiceStrItems = new String[rates.length];
+            CharSequence[] choiceValues = new String[rates.length];
+
+            String unit = "mbps";
+            String defaultValue = "1.0 mbps";
+            boolean hasDefault = false;
+            for (int i = 0; i < rates.length; ++i) {
+                double bitRateValue = rates[i];
+                choiceStrItems[i] = valueOf(bitRateValue + " " + unit);
+                choiceValues[i] = valueOf(bitRateValue);
+                if (bitRateValue == 1.0) {
+                    Log.d(TAG,"bitRateValue" + String.valueOf(bitRateValue));
+                    hasDefault = true;
+                }
+            }
+            //List preference under the category
+            final ListPreference listPref = (ListPreference)findPreference("pref_bitrate");
+
+            listPref.setEntries(choiceStrItems);
+            listPref.setEntryValues(choiceStrItems);
+
+            if (hasDefault) {
+                listPref.setSummary(defaultValue);
+                listPref.setValue(defaultValue);
+            } else {
+                Log.e(TAG, "does not support default bit rate");
+            }
+
+            listPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    listPref.setSummary(newValue.toString());
+                    listPref.setValue(newValue.toString());
                     return true;
                 }
             });

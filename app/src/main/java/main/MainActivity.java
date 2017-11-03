@@ -128,7 +128,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		SurfaceView svCameraPreview = (SurfaceView) this.findViewById(R.id.svCameraPreview);
 		this.previewHolder = svCameraPreview.getHolder();
 		this.previewHolder.addCallback(this);
-
 	}
 
 
@@ -239,12 +238,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		this.ip = SettingsActivity.getRemoteIP(MainActivity.this);
 		Log.d(TAG, "Resolution:" + this.width + "x" + this.height);
 
-/*		List<Double> bitRate = SettingsActivity.getBitRate(MainActivity.this);
+		List<Double> bitRate = SettingsActivity.getBitRate(MainActivity.this);
 		if (bitRate.get(0) != null) {
 			double temp = bitRate.get(0);
 			this.DEFAULT_BIT_RATE = (int) temp * 1000000;
-			Log.d(TAG, "DEFAULT_BIT_RATE" + String.valueOf(DEFAULT_BIT_RATE));
-		}*/
+		}
 	}
 
 
@@ -257,7 +255,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 		this.encoder = new AvcEncoder();
 		this.encoder.init(width, height, DEFAULT_FRAME_RATE, DEFAULT_BIT_RATE);
-
+		//Log.d(TAG, "BIT_RATE:" + String.valueOf(DEFAULT_BIT_RATE));
 		try {
 			this.address = InetAddress.getByName(ip);
 		} catch (UnknownHostException e) {
