@@ -24,6 +24,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.util.LongSparseArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Surface;
@@ -55,7 +56,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	// skype bit rate 30kbps - 950kbps
 	// skype resolution 	640*480, 320*240, 160*120
 	private final static int DEFAULT_FRAME_RATE = 10;
-	private final static int DEFAULT_BIT_RATE = (int)1e6; // 1mbps
+	private static int DEFAULT_BIT_RATE = (int)1e6; // 1mbps
 	// 0.5mbps 1mpbs 1.5mpbs 2mbps 2.5mbps 3mbps
 
 	Camera camera;
@@ -237,6 +238,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 		this.ip = SettingsActivity.getRemoteIP(MainActivity.this);
 		Log.d(TAG, "Resolution:" + this.width + "x" + this.height);
+
+/*		List<Double> bitRate = SettingsActivity.getBitRate(MainActivity.this);
+		if (bitRate.get(0) != null) {
+			double temp = bitRate.get(0);
+			this.DEFAULT_BIT_RATE = (int) temp * 1000000;
+			Log.d(TAG, "DEFAULT_BIT_RATE" + String.valueOf(DEFAULT_BIT_RATE));
+		}*/
 	}
 
 
