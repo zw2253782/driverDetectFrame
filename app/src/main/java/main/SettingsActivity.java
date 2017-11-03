@@ -28,34 +28,42 @@ import static java.lang.String.valueOf;
 
 
 public class SettingsActivity extends AppCompatActivity {
-
-
     private String TAG = "SettingActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
-
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
                 .commit();
-
         setupActionBar();
-
     }
-
-    public static boolean isAutoMode(Context context) {
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
-        boolean cbValue = sharedPref.getBoolean("pref_auto", false);
-        return cbValue;
-    }
-
+    /**
+     *
+     * @param context
+     * @return
+     */
     public static String getRemoteIP(Context context) {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         String ip = sharedPref.getString("pref_remote_ip", "192.168.0.2");
         return ip;
     }
 
+    /**
+     *
+     */
+    private void setupActionBar() {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            // Show the Up button in the action bar.
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowHomeEnabled(true);
+        }
+    }
+    /**
+     *
+     * @param context
+     * @return
+     */
     public static List<Integer> getResolution(Context context) {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         String resolution = sharedPref.getString("pref_resolution", "640x480");
@@ -67,6 +75,9 @@ public class SettingsActivity extends AppCompatActivity {
         return res;
     }
 
+    /**
+     *
+     */
     public static class SettingsFragment extends PreferenceFragment {
         private String TAG = "SettingFragment";
 
@@ -113,7 +124,9 @@ public class SettingsActivity extends AppCompatActivity {
             });
         }
 
-
+        /**
+         *
+         */
         private void generateResolutionPreference() {
             Camera tmpCam = Camera.open();
             Camera.Parameters params = tmpCam.getParameters();
@@ -155,19 +168,6 @@ public class SettingsActivity extends AppCompatActivity {
 
             tmpCam.release();
             tmpCam = null;
-        }
-    }
-
-
-
-
-
-    private void setupActionBar() {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            // Show the Up button in the action bar.
-            actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setDisplayShowHomeEnabled(true);
         }
     }
 
