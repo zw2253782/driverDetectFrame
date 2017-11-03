@@ -119,6 +119,7 @@ public class SettingsActivity extends AppCompatActivity {
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     ipPref.setSummary(newValue.toString());
                     ipPref.setText(newValue.toString());
+                    ipPref.setDefaultValue(newValue);
                     return true;
                 }
             });
