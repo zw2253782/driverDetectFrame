@@ -17,6 +17,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.List;
 
 import utility.FrameData;
 import utility.JsonWraper;
@@ -137,24 +138,27 @@ public class UDPService extends Service implements Runnable {
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
-    //send data back to UDPClient
-    public void send(FrameData frameData, InetAddress remoteIPAddress, int remotePort) {
+    private byte[] wrapFramePayload(FrameData frameData) {
         Gson gson = new Gson();
-
         byte [] body = frameData.rawFrameData;
         frameData.rawFrameData = null;
         byte [] header = gson.toJson(frameData).getBytes();
-
         byte[] payload = new byte[header.length + body.length];
-
         System.arraycopy(header, 0, payload, 0, header.length);
         System.arraycopy(body, 0, payload, header.length, body.length);
-
-        DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
-
+        return payload;
+    }
+    //send data back to UDPClient
+    public void send(FrameData frameData, InetAddress remoteIPAddress, int remotePort) {
         try {
-            if (localSocket != null) {
-                localSocket.send(sendPacket);
+            List<FrameData> frames = frameData.split();
+            for (int i = 0; i < frames.size(); ++i) {
+                FrameData frame = frames.get(i);
+                byte[] payload = wrapFramePayload(frame);
+                DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
+                if (localSocket != null) {
+                    localSocket.send(sendPacket);
+                }
             }
         } catch (IOException e) {
             // TODO Auto-generated catch block

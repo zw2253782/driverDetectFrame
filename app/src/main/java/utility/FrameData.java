@@ -3,6 +3,8 @@ package utility;
 import android.util.Log;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class FrameData implements Serializable {
@@ -52,17 +54,19 @@ public class FrameData implements Serializable {
         frame.subIndex = index;
         return frame;
     }
-
+*/
     public List<FrameData> split() {
         List<FrameData> res = new ArrayList<FrameData>();
-
-        subSum = video_.length/5000 + (int)(video_.length%5000 == 0 ? 0 : 1);
+        int len = 60000;
+        int subSum = rawFrameData.length/len + (int)(rawFrameData.length%len == 0 ? 0 : 1);
+        int totalLen = this.rawFrameData.length;
         for (int i = 0; i < subSum; ++i) {
-            byte[] newData = new byte[5000];
-            System.arraycopy(this.video_, i * 5000, newData, 0, 5000);
-            FrameData newFrame = this.generateSubFrame(i);
+            int curLen = Math.min(totalLen - len * i, len);
+            byte[] newData = new byte[curLen];
+            System.arraycopy(this.rawFrameData, i * len, newData, 0, curLen);
+            FrameData newFrame = new FrameData(this.isIFrame, newData, this.rawFrameData.length);
             res.add(newFrame);
         }
         return res;
-    }*/
+    }
 }
