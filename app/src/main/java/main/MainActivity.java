@@ -56,7 +56,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	// skype bit rate 30kbps - 950kbps
 	// skype resolution 	640*480, 320*240, 160*120
 	private final static int DEFAULT_FRAME_RATE = 10;
-	private static int DEFAULT_BIT_RATE = (int)1e6; // 1mbps
+	private static int frame_bitrate = (int)1e6; // 1mbps
 	// 0.5mbps 1mpbs 1.5mpbs 2mbps 2.5mbps 3mbps
 
 	Camera camera;
@@ -241,7 +241,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		List<Double> bitRate = SettingsActivity.getBitRate(MainActivity.this);
 		if (bitRate.get(0) != null) {
 			double temp = bitRate.get(0);
-			this.DEFAULT_BIT_RATE = (int) temp * 1000000;
+			this.frame_bitrate = (int) temp * 1000000;
 		}
 	}
 
@@ -254,8 +254,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		startCamera();
 
 		this.encoder = new AvcEncoder();
-		this.encoder.init(width, height, DEFAULT_FRAME_RATE, DEFAULT_BIT_RATE);
-		//Log.d(TAG, "BIT_RATE:" + String.valueOf(DEFAULT_BIT_RATE));
+		this.encoder.init(width, height, DEFAULT_FRAME_RATE, frame_bitrate);
 		try {
 			this.address = InetAddress.getByName(ip);
 		} catch (UnknownHostException e) {
@@ -349,12 +348,18 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			}
 			*/
 			FrameData frameData = encoder.offerEncoder(data);
-			dbHelper_.insertFrameData(frameData);
-			if (frameData.getDataSize() > 0) {
-				synchronized (encDataList) {
-					encDataList.add(frameData);
+
+			List<FrameData> frames = frameData.split();
+			for (int i = 0; i < frames.size(); ++i) {
+				FrameData frame = frames.get(i);
+				dbHelper_.insertFrameData(frame);
+				if (frame.getDataSize() > 0) {
+					synchronized (encDataList) {
+						encDataList.add(frame);
+					}
 				}
 			}
+
 		}
 	}
 

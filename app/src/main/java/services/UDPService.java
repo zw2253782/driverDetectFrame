@@ -151,14 +151,11 @@ public class UDPService extends Service implements Runnable {
     //send data back to UDPClient
     public void send(FrameData frameData, InetAddress remoteIPAddress, int remotePort) {
         try {
-            List<FrameData> frames = frameData.split();
-            for (int i = 0; i < frames.size(); ++i) {
-                FrameData frame = frames.get(i);
-                byte[] payload = wrapFramePayload(frame);
-                DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
-                if (localSocket != null) {
-                    localSocket.send(sendPacket);
-                }
+            byte[] payload = wrapFramePayload(frameData);
+            Log.d(TAG, "send data: " + payload.length);
+            DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
+            if (localSocket != null) {
+                localSocket.send(sendPacket);
             }
         } catch (IOException e) {
             // TODO Auto-generated catch block
