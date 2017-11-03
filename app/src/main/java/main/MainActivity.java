@@ -501,8 +501,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				}
 				//we can start 2 thread, one is with timeStamp header send to one server and get timeStamp back
 				// the other thread will send without header and directly show the video.
+				appendToVideoFile(frameData.rawFrameData);
 				if (mUDPConnection != null && mUDPConnection.isRunning()) {
-					appendToVideoFile(frameData.rawFrameData);
 					mUDPConnection.sendData(frameData, address, port);
 				}
 			}

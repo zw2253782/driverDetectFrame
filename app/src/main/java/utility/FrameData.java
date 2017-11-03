@@ -3,6 +3,8 @@ package utility;
 import android.util.Log;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class FrameData implements Serializable {
@@ -20,6 +22,8 @@ public class FrameData implements Serializable {
     public byte[] rawFrameData = null;
     public static long sequence = 0;
 
+    public int splitTotal = 0; // 0 means no split
+    public int splitIndex = 0; // index should be no larger than splitTotal
 
     public FrameData (boolean isIFrame, byte[] data, int originalSize){
         this.type = "frame_data_from_car";
@@ -45,24 +49,24 @@ public class FrameData implements Serializable {
         return this.videoSendTime;
     }
 
-
-/*    public FrameData generateSubFrame(int index) {
-        FrameData frame = new FrameData();
-// copy the data
-        frame.subIndex = index;
-        return frame;
+    public void setSplitParams(int cnt, int index) {
+        this.splitTotal = cnt;
+        this.splitIndex = index;
     }
 
     public List<FrameData> split() {
         List<FrameData> res = new ArrayList<FrameData>();
-
-        subSum = video_.length/5000 + (int)(video_.length%5000 == 0 ? 0 : 1);
-        for (int i = 0; i < subSum; ++i) {
-            byte[] newData = new byte[5000];
-            System.arraycopy(this.video_, i * 5000, newData, 0, 5000);
-            FrameData newFrame = this.generateSubFrame(i);
+        int len = 60000;
+        splitTotal = rawFrameData.length/len + (int)(rawFrameData.length%len == 0 ? 0 : 1);
+        int totalLen = this.rawFrameData.length;
+        for (int i = 0; i < splitTotal; ++i) {
+            int curLen = Math.min(totalLen - len * i, len);
+            byte[] newData = new byte[curLen];
+            System.arraycopy(this.rawFrameData, i * len, newData, 0, curLen);
+            FrameData newFrame = new FrameData(this.isIFrame, newData, this.rawFrameData.length);
+            newFrame.setSplitParams(this.splitTotal - 1, i);
             res.add(newFrame);
         }
         return res;
-    }*/
+    }
 }
