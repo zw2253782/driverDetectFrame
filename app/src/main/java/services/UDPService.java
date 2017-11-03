@@ -41,6 +41,7 @@ public class UDPService extends Service implements Runnable {
         }
         public void sendData(FrameData data, InetAddress remoteIPAddress, int remotePort){
             send(data, remoteIPAddress, remotePort);
+
         }
     }
 
@@ -153,6 +154,9 @@ public class UDPService extends Service implements Runnable {
 
         try {
             localSocket.send(sendPacket);
+            //Log.d(TAG,"sendPackag context is: " + sendPacket);
+            //Log.d(TAG,"sendPackag to: " + remoteIPAddress +"/ " + remotePort);
+
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

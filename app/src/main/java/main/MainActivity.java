@@ -106,7 +106,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						showSettingsDlg();
+						//showSettingsDlg();
 					}
 				});
 
