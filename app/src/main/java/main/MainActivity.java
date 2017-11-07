@@ -6,28 +6,23 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
-import android.hardware.Camera.Size;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.util.LongSparseArray;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -45,7 +40,7 @@ import services.UDPService;
 import services.SensorService;
 import utility.Constants;
 import utility.FrameData;
-import utility.SerialReading;
+import utility.ControlCommand;
 import utility.Trace;
 
 
@@ -56,7 +51,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	// skype bit rate 30kbps - 950kbps
 	// skype resolution 	640*480, 320*240, 160*120
 	private final static int DEFAULT_FRAME_RATE = 10;
-	private static int DEFAULT_BIT_RATE = (int)1e6; // 1mbps
+	private static int frame_bitrate = (int)1e6; // 1mbps
 	// 0.5mbps 1mpbs 1.5mpbs 2mbps 2.5mbps 3mbps
 
 	Camera camera;
@@ -71,9 +66,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	public InetAddress address;
 	public final int port = 55555;
 
-	ArrayList<FrameData> encDataList = new ArrayList<FrameData>();
-	ArrayList<Integer> encDataLengthList = new ArrayList<Integer>();
-
+	List<FrameData> encDataList = new LinkedList<FrameData>();
+	List<ControlCommand> encControlCommandList = new LinkedList<ControlCommand>();
 
 	private static Intent mSensor = null;
 	private DatabaseHelper dbHelper_ = null;
@@ -241,7 +235,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		List<Double> bitRate = SettingsActivity.getBitRate(MainActivity.this);
 		if (bitRate.get(0) != null) {
 			double temp = bitRate.get(0);
-			this.DEFAULT_BIT_RATE = (int) temp * 1000000;
+			this.frame_bitrate = (int) temp * 1000000;
 		}
 	}
 
@@ -254,8 +248,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		startCamera();
 
 		this.encoder = new AvcEncoder();
-		this.encoder.init(width, height, DEFAULT_FRAME_RATE, DEFAULT_BIT_RATE);
-		//Log.d(TAG, "BIT_RATE:" + String.valueOf(DEFAULT_BIT_RATE));
+		this.encoder.init(width, height, DEFAULT_FRAME_RATE, frame_bitrate);
 		try {
 			this.address = InetAddress.getByName(ip);
 		} catch (UnknownHostException e) {
@@ -339,22 +332,26 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	public void onPreviewFrame(byte[] data, Camera camera) {
 		camera.addCallbackBuffer(previewBuffer);
 		if (isStreaming) {
-			if (encDataLengthList.size() > 10) {
-				Log.e(TAG, "OUT OF BUFFER");
-				return;
-			}
 			/*
 			if (FrameData.sequenceIndex%2 == 0) {
 				encoder.forceIFrame();
 			}
 			*/
+			// long time = System.currentTimeMillis();
 			FrameData frameData = encoder.offerEncoder(data);
-			dbHelper_.insertFrameData(frameData);
-			if (frameData.getDataSize() > 0) {
-				synchronized (encDataList) {
-					encDataList.add(frameData);
+			// Log.d(TAG, String.valueOf(System.currentTimeMillis() - time));
+
+			List<FrameData> frames = frameData.split();
+			for (int i = 0; i < frames.size(); ++i) {
+				FrameData frame = frames.get(i);
+				dbHelper_.insertFrameData(frame);
+				if (frame.getDataSize() > 0) {
+					synchronized (encDataList) {
+						encDataList.add(frame);
+					}
 				}
 			}
+
 		}
 	}
 
@@ -452,7 +449,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				String receivedCommand = intent.getStringExtra("control");
 				Gson gson = new Gson();
 				// Log.d(TAG,"control: " + receivedCommand);
-				SerialReading controller = gson.fromJson(receivedCommand,SerialReading.class);
+				ControlCommand controller = gson.fromJson(receivedCommand, ControlCommand.class);
+
+				// encControlCommandList.add(controller);
+
 				if (controller != null && mSerialPortConnection != null) {
 					double throttle = (float)0.0;
 					double steering = controller.steering;

@@ -35,9 +35,11 @@ public class FrameData implements Serializable {
         this.transmitSequence = FrameData.sequenceIndex++;
 
         double compressRatio = this.compressedDataSize * 100.0/this.originalDataSize;
-        //Log.d(TAG, this.transmitSequence + ", I:" + this.isIFrame + "," + "ratio:" + String.format("%.2f", compressRatio) + ",size:" + this.compressedDataSize);
     }
 
+    public double getCompressRatio () {
+        return this.compressedDataSize * 100.0/this.originalDataSize;
+    }
     public int getDataSize() {
         return rawFrameData.length;
     }
@@ -56,12 +58,13 @@ public class FrameData implements Serializable {
         List<FrameData> res = new ArrayList<FrameData>();
         int len = 60000;
         splitTotal = rawFrameData.length/len + (int)(rawFrameData.length%len == 0 ? 0 : 1);
+        double ratio = this.getCompressRatio();
         int totalLen = this.rawFrameData.length;
         for (int i = 0; i < splitTotal; ++i) {
             int curLen = Math.min(totalLen - len * i, len);
             byte[] newData = new byte[curLen];
             System.arraycopy(this.rawFrameData, i * len, newData, 0, curLen);
-            FrameData newFrame = new FrameData(this.isIFrame, newData, this.rawFrameData.length);
+            FrameData newFrame = new FrameData(this.isIFrame, newData, (int)(curLen / this.getCompressRatio()));
             newFrame.setSplitParams(this.splitTotal - 1, i);
             res.add(newFrame);
         }

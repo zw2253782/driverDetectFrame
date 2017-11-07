@@ -17,7 +17,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.util.List;
 
 import utility.FrameData;
 import utility.JsonWraper;
@@ -129,13 +128,6 @@ public class UDPService extends Service implements Runnable {
         Log.d(TAG, "stop UDP receiving thread");
     }
 
-    //parse controller data
-    private void processControllerData(String controllerData){
-
-        Intent intent = new Intent("control");
-        intent.putExtra("control", controllerData);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    }
 
     private byte[] wrapFramePayload(FrameData frameData) {
         Gson gson = new Gson();
@@ -150,14 +142,11 @@ public class UDPService extends Service implements Runnable {
     //send data back to UDPClient
     public void send(FrameData frameData, InetAddress remoteIPAddress, int remotePort) {
         try {
-            List<FrameData> frames = frameData.split();
-            for (int i = 0; i < frames.size(); ++i) {
-                FrameData frame = frames.get(i);
-                byte[] payload = wrapFramePayload(frame);
-                DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
-                if (localSocket != null) {
-                    localSocket.send(sendPacket);
-                }
+            byte[] payload = wrapFramePayload(frameData);
+            Log.d(TAG, "send data: " + payload.length);
+            DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
+            if (localSocket != null) {
+                localSocket.send(sendPacket);
             }
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -176,5 +165,14 @@ public class UDPService extends Service implements Runnable {
 
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
+
+    //parse controller data
+    private void processControllerData(String controllerData){
+
+        Intent intent = new Intent("control");
+        intent.putExtra("control", controllerData);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
 
 }
