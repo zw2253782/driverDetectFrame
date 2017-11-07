@@ -16,7 +16,7 @@ public class AvcEncoder
 {
 	private final static String TAG = AvcEncoder.class.getSimpleName();
 	private final static String MIME_TYPE = "video/avc";
-	private final static int I_FRAME_INTERVAL = 1000;
+	private final static int I_FRAME_INTERVAL = 1;
 	
     MediaCodec mediaCodec;  
     int width;  
@@ -89,7 +89,7 @@ public class AvcEncoder
 
         // testing
         // MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR
-        mediaFormat.setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR);
+        // mediaFormat.setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR);
           
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);  
         mediaCodec.start();  

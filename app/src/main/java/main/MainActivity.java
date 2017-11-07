@@ -83,7 +83,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		this.setContentView(R.layout.activity_main);
 
-
 		if (Build.MODEL.equals("Nexus 5X")){
 			//Nexus 5X's screen is reversed, ridiculous! the image sensor does not fit in correct orientation
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
@@ -258,8 +257,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		}
 
 		this.isStreaming = true;
-		Thread thrd = new Thread(senderRun);
-		thrd.start();
+
+		Thread streamingThread = new Thread(senderRun);
+		streamingThread.start();
+		Thread controlThread = new Thread(controlMessageThread);
+		controlThread.start();
 
 		((Button) this.findViewById(R.id.btnstart)).setText("Stop");
 		this.findViewById(R.id.btntest).setEnabled(false);
@@ -331,6 +333,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	@Override
 	public void onPreviewFrame(byte[] data, Camera camera) {
 		camera.addCallbackBuffer(previewBuffer);
+
 		if (isStreaming) {
 			/*
 			if (FrameData.sequence%2 == 0) {
@@ -449,20 +452,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				String receivedCommand = intent.getStringExtra("control");
 				Gson gson = new Gson();
 				// Log.d(TAG,"control: " + receivedCommand);
-				ControlCommand controller = gson.fromJson(receivedCommand, ControlCommand.class);
+				ControlCommand controlCommand = gson.fromJson(receivedCommand, ControlCommand.class);
 
-				// encControlCommandList.add(controller);
-
-				if (controller != null && mSerialPortConnection != null) {
-					double throttle = (float)0.0;
-					double steering = controller.steering;
-					if(controller.throttle > 0.5) {
-						throttle = (float) ((controller.throttle-0.5) * 0.4 + 1.0);
+				if (controlCommand != null) {
+					synchronized (encControlCommandList) {
+						encControlCommandList.add(controlCommand);
 					}
-					mSerialPortConnection.sendCommandFunction("throttle(" + String.valueOf(throttle) + ")");
-					mSerialPortConnection.sendCommandFunction("steering(" + String.valueOf(steering) + ")");
 				}
-				//send to UDP remote host that the command is successful
 			} else {
 				Log.d(TAG, "unknown intent: " + intent.getAction());
 			}
@@ -507,6 +503,45 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		}
 	};
 
+	/**
+	 * push data to sender
+	 */
+	Runnable controlMessageThread = new Runnable() {
+		@Override
+		public void run() {
+			while (isStreaming) {
+				boolean empty = false;
+				ControlCommand controlCommand = null;
 
+				synchronized (encControlCommandList) {
+					if (encControlCommandList.size() == 0) {
+						empty = true;
+					} else
+						controlCommand = encControlCommandList.remove(0);
+				}
+				if (empty) {
+					try {
+						Thread.sleep(1);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					continue;
+				}
+				/*
+				* delay if the latency is too small
+				* */
+
+				if (mSerialPortConnection != null) {
+					double throttle = (float)0.0;
+					double steering = controlCommand.steering;
+					if(controlCommand.throttle > 0.5) {
+						throttle = (float) ((controlCommand.throttle-0.5) * 0.4 + 1.0);
+					}
+					mSerialPortConnection.sendCommandFunction("throttle(" + String.valueOf(throttle) + ")");
+					mSerialPortConnection.sendCommandFunction("steering(" + String.valueOf(steering) + ")");
+				}
+			}
+		}
+	};
 
 }
