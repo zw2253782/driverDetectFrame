@@ -31,11 +31,11 @@ public class DatabaseHelper {
     private static final String KEY_TIME = "time";
 
 
-    private static final String videoSendTime = "videoSendTime";
-    private static final String Sequence = "Sequence";
+    private static final String frameSendTime = "frameSendTime";
+    private static final String transmitSequence = "transmitSequence";
     private static final String roundLatency = "roundLatency";
     private static final String oraginalSize = "oraginalSize";
-    private static final String PCtime = "PCtime";
+    private static final String serverTime = "serverTime";
     private static final String compressedDataSize = "compressedDataSize";
     private static final String isIFrame = "isIFrame";
 
@@ -61,9 +61,9 @@ public class DatabaseHelper {
 
 
     private static final String CREATE_TABLE_LATENCY = "CREATE TABLE IF NOT EXISTS "
-            + TABLE_LATENCY + "(" + videoSendTime + " INTEGER PRIMARY KEY,"
-            + Sequence + " REAL," +  roundLatency + " REAL,"
-            + oraginalSize + " REAL," + PCtime + " REAL," +  compressedDataSize + " REAL,"
+            + TABLE_LATENCY + "(" + frameSendTime + " INTEGER PRIMARY KEY,"
+            + transmitSequence + " REAL," +  roundLatency + " REAL,"
+            + oraginalSize + " REAL," + serverTime + " REAL," +  compressedDataSize + " REAL,"
             + isIFrame + " REAL" + ")";
 
     private static final String CREATE_TABLE_ROTATION_MATRIX = "CREATE TABLE IF NOT EXISTS "
@@ -103,15 +103,15 @@ public class DatabaseHelper {
         return this.opened;
     }
 
-    //private String[] dataName = {"videoSendTime","Sequence","roundLatency","oraginalSize"};
+    //private String[] dataName = {"frameSendTime","transmitSequence","roundLatency","oraginalSize"};
 
     public void insertFrameData(FrameData frameData) {
             ContentValues values = new ContentValues();
-            values.put(videoSendTime, frameData.getVideoSendTime());
-            values.put(Sequence, frameData.Sequence);
+            values.put(frameSendTime, frameData.getFrameSendTime());
+            values.put(transmitSequence, frameData.transmitSequence);
             values.put(roundLatency, frameData.roundLatency);
             values.put(oraginalSize, frameData.originalDataSize);
-            values.put(PCtime, frameData.PCtime);
+            values.put(serverTime, frameData.serverTime);
             values.put(compressedDataSize, frameData.compressedDataSize);
             values.put(isIFrame, frameData.isIFrame);
             db_.insert(TABLE_LATENCY, null, values);
@@ -123,10 +123,11 @@ public class DatabaseHelper {
 
         ContentValues args = new ContentValues();
         args.put(roundLatency, updatedFrameData.roundLatency);
-        args.put(PCtime,updatedFrameData.PCtime);
+        //Log.d(TAG,"round latency:" + roundLatency);
+        args.put(serverTime,updatedFrameData.serverTime);
 
-        String where = " Sequence = ? ";
-        String[] whereArgs = {String.valueOf(updatedFrameData.Sequence)};
+        String where = " transmitSequence = ? ";
+        String[] whereArgs = {String.valueOf(updatedFrameData.transmitSequence)};
         return db_.update(TABLE_LATENCY, args, where, whereArgs);
     }
 
