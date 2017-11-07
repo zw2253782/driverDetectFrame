@@ -143,6 +143,8 @@ public class UDPService extends Service implements Runnable {
     public void send(FrameData frameData, InetAddress remoteIPAddress, int remotePort) {
         try {
             byte[] payload = wrapFramePayload(frameData);
+            Log.d(TAG, "payload length:" + payload.length);
+
             DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
             if (localSocket != null) {
                 localSocket.send(sendPacket);
@@ -158,7 +160,6 @@ public class UDPService extends Service implements Runnable {
         Gson gson = new Gson();
         FrameData frameData = gson.fromJson(frame, FrameData.class);
         frameData.roundLatency = System.currentTimeMillis() - frameData.getFrameSendTime();
-        // Log.d(TAG, gson.toJson(frameData));
         Intent intent = new Intent("udp");
         intent.putExtra("latency", gson.toJson(frameData));
 
