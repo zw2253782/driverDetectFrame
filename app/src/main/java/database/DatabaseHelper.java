@@ -61,8 +61,8 @@ public class DatabaseHelper {
 
 
     private static final String CREATE_TABLE_LATENCY = "CREATE TABLE IF NOT EXISTS "
-            + TABLE_LATENCY + "(" + frameSendTime + " INTEGER PRIMARY KEY,"
-            + transmitSequence + " REAL," +  roundLatency + " REAL,"
+            + TABLE_LATENCY + "(" + transmitSequence + " INTEGER PRIMARY KEY,"
+            + frameSendTime + " REAL," +  roundLatency + " REAL,"
             + oraginalSize + " REAL," + serverTime + " REAL," +  compressedDataSize + " REAL,"
             + isIFrame + " REAL" + ")";
 

@@ -43,6 +43,8 @@ import utility.FrameData;
 import utility.ControlCommand;
 import utility.Trace;
 
+import static java.lang.Math.abs;
+
 
 public class MainActivity extends Activity implements SurfaceHolder.Callback, Camera.PreviewCallback {
 	private final static String TAG = MainActivity.class.getSimpleName();
@@ -59,7 +61,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	byte[] previewBuffer;
 	boolean isStreaming = false;
 	AvcEncoder encoder;
-
+    boolean consistentControl = false;
 
 	private String ip = "192.168.11.2";
 
@@ -68,6 +70,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 	List<FrameData> encDataList = new LinkedList<FrameData>();
 	List<ControlCommand> encControlCommandList = new LinkedList<ControlCommand>();
+	LatencyMonitor latencyMonitor;
 
 	private static Intent mSensor = null;
 	private DatabaseHelper dbHelper_ = null;
@@ -143,6 +146,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+		latencyMonitor = new LatencyMonitor();
 	}
 
 	private void setupFolders () {
@@ -453,8 +458,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				Gson gson = new Gson();
 				// Log.d(TAG,"control: " + receivedCommand);
 				ControlCommand controlCommand = gson.fromJson(receivedCommand, ControlCommand.class);
-
 				if (controlCommand != null) {
+				    latencyMonitor.recordOneWayLatency(System.currentTimeMillis() - controlCommand.timeStamp);
 					synchronized (encControlCommandList) {
 						encControlCommandList.add(controlCommand);
 					}
@@ -462,8 +467,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			} else {
 				Log.d(TAG, "unknown intent: " + intent.getAction());
 			}
-
-
 		}
 
 	};
@@ -528,9 +531,19 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 					continue;
 				}
 				/*
-				* delay if the latency is too small
+				* delay for consistence control
 				* */
-
+                long timeDiff = System.currentTimeMillis() - controlCommand.timeStamp;
+                if (consistentControl) {
+                    long diff = timeDiff - latencyMonitor.getAverageOneWayLatency();
+                    if (diff < 0) {
+                        try {
+                            Thread.sleep(Math.abs(diff));
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
 				if (mSerialPortConnection != null) {
 					double throttle = (float)0.0;
 					double steering = controlCommand.steering;
