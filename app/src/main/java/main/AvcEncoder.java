@@ -103,7 +103,7 @@ public class AvcEncoder
             mediaCodec.stop();  
             mediaCodec.release();
 
-            FrameData.sequence = 0;
+            FrameData.sequenceIndex = 0;
         }
         catch (Exception e)
         {   

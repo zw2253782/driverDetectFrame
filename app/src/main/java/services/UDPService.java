@@ -158,7 +158,7 @@ public class UDPService extends Service implements Runnable {
     private void processFrameData(String frame) {
         Gson gson = new Gson();
         FrameData frameData = gson.fromJson(frame, FrameData.class);
-        frameData.roundLatency = System.currentTimeMillis() - frameData.getVideoSendTime();
+        frameData.roundLatency = System.currentTimeMillis() - frameData.getFrameSendTime();
         // Log.d(TAG, gson.toJson(frameData));
         Intent intent = new Intent("udp");
         intent.putExtra("latency", gson.toJson(frameData));

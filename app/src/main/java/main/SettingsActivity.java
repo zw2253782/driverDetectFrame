@@ -45,7 +45,7 @@ public class SettingsActivity extends AppCompatActivity {
      */
     public static String getRemoteIP(Context context) {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
-        String ip = sharedPref.getString("pref_remote_ip", "192.168.0.2");
+        String ip = sharedPref.getString("pref_remote_ip", "192.168.11.2");
         return ip;
     }
 

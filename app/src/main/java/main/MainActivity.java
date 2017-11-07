@@ -61,7 +61,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	AvcEncoder encoder;
 
 
-	private String ip = "192.168.8.20";
+	private String ip = "192.168.11.2";
 
 	public InetAddress address;
 	public final int port = 55555;
@@ -336,7 +336,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 		if (isStreaming) {
 			/*
-			if (FrameData.sequence%2 == 0) {
+			if (FrameData.sequenceIndex%2 == 0) {
 				encoder.forceIFrame();
 			}
 			*/
@@ -446,7 +446,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				if (dbHelper_.isOpen()) {
 					dbHelper_.updateFrameData(frameData);
 				}
-				// Log.d(TAG, "frame data: " + message);
+				Log.d(TAG, "frame data update: " + dbHelper_.updateFrameData(frameData));
 
 			} else if (intent.getAction().equals("control")){
 				String receivedCommand = intent.getStringExtra("control");
