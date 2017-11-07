@@ -16,7 +16,7 @@ public class AvcEncoder
 {
 	private final static String TAG = AvcEncoder.class.getSimpleName();
 	private final static String MIME_TYPE = "video/avc";
-	private final static int I_FRAME_INTERVAL = 1000;
+	private final static int I_FRAME_INTERVAL = 1;
 	
     MediaCodec mediaCodec;  
     int width;  

@@ -443,7 +443,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				if (dbHelper_.isOpen()) {
 					dbHelper_.updateFrameData(frameData);
 				}
-				Log.d(TAG, "frame data update: " + dbHelper_.updateFrameData(frameData));
+				//Log.d(TAG, "frame data update: " + dbHelper_.updateFrameData(frameData));
 
 			} else if (intent.getAction().equals("control")){
 				String receivedCommand = intent.getStringExtra("control");
