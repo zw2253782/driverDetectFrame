@@ -139,18 +139,28 @@ public class UDPService extends Service implements Runnable {
         System.arraycopy(body, 0, payload, header.length, body.length);
         return payload;
     }
+
+
     //send data back to UDPClient
+    private static int lastIndex = -1;
+    private static int streamingExtraLatency = 0;
     public void send(FrameData frameData, InetAddress remoteIPAddress, int remotePort) {
         try {
             byte[] payload = wrapFramePayload(frameData);
-            Log.d(TAG, "payload length:" + payload.length);
+            Log.d(TAG, frameData.rawFrameIndex + ", payload length:" + payload.length);
 
+            if (frameData.rawFrameIndex != lastIndex) {
+                lastIndex = frameData.rawFrameIndex;
+                Thread.sleep(streamingExtraLatency);
+            }
             DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
             if (localSocket != null) {
                 localSocket.send(sendPacket);
             }
         } catch (IOException e) {
             // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }

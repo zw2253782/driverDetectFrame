@@ -181,12 +181,15 @@ public class AvcEncoder
         return frameData;
     }
 
+    // it works
     public void forceIFrame() {
         Bundle b = new Bundle();
         b.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
         mediaCodec.setParameters(b);
     }
 
+
+    // TODO: test if it works
     public void setBitrate(int targetBitrate) {
         Bundle bitrate = new Bundle();
         bitrate.putInt(MediaCodec.PARAMETER_KEY_VIDEO_BITRATE, targetBitrate);
