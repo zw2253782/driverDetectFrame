@@ -17,11 +17,9 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.util.List;
 
 import utility.FrameData;
 import utility.JsonWraper;
-import utility.SerialReading;
 
 public class UDPService extends Service implements Runnable {
 
@@ -130,13 +128,6 @@ public class UDPService extends Service implements Runnable {
         Log.d(TAG, "stop UDP receiving thread");
     }
 
-    //parse controller data
-    private void processControllerData(String controllerData){
-
-        Intent intent = new Intent("control");
-        intent.putExtra("control", controllerData);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    }
 
     private byte[] wrapFramePayload(FrameData frameData) {
         Gson gson = new Gson();
@@ -174,5 +165,14 @@ public class UDPService extends Service implements Runnable {
 
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
+
+    //parse controller data
+    private void processControllerData(String controllerData){
+
+        Intent intent = new Intent("control");
+        intent.putExtra("control", controllerData);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
 
 }

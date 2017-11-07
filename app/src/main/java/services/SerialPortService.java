@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import utility.SerialReading;
+import utility.ControlCommand;
 
 
 /**
@@ -258,7 +258,7 @@ public class SerialPortService extends Service implements Runnable {
     //send the Halldata(current rotation number and throttle) to main
     private void sendSerialMessage(double speed, int rotation, long time) {
 
-        SerialReading obj = new SerialReading(speed, rotation, time);
+        ControlCommand obj = new ControlCommand(speed, rotation, time);
         Gson gson = new Gson();
         String json = gson.toJson(obj);
 

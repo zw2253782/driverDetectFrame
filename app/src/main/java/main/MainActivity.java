@@ -6,28 +6,23 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
-import android.hardware.Camera.Size;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.util.LongSparseArray;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -45,7 +40,7 @@ import services.UDPService;
 import services.SensorService;
 import utility.Constants;
 import utility.FrameData;
-import utility.SerialReading;
+import utility.ControlCommand;
 import utility.Trace;
 
 
@@ -71,9 +66,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	public InetAddress address;
 	public final int port = 55555;
 
-	ArrayList<FrameData> encDataList = new ArrayList<FrameData>();
-	ArrayList<Integer> encDataLengthList = new ArrayList<Integer>();
-
+	List<FrameData> encDataList = new LinkedList<FrameData>();
+	List<ControlCommand> encControlCommandList = new LinkedList<ControlCommand>();
 
 	private static Intent mSensor = null;
 	private DatabaseHelper dbHelper_ = null;
@@ -338,16 +332,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	public void onPreviewFrame(byte[] data, Camera camera) {
 		camera.addCallbackBuffer(previewBuffer);
 		if (isStreaming) {
-			if (encDataLengthList.size() > 10) {
-				Log.e(TAG, "OUT OF BUFFER");
-				return;
-			}
 			/*
 			if (FrameData.sequence%2 == 0) {
 				encoder.forceIFrame();
 			}
 			*/
+			// long time = System.currentTimeMillis();
 			FrameData frameData = encoder.offerEncoder(data);
+			// Log.d(TAG, String.valueOf(System.currentTimeMillis() - time));
 
 			List<FrameData> frames = frameData.split();
 			for (int i = 0; i < frames.size(); ++i) {
@@ -457,7 +449,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				String receivedCommand = intent.getStringExtra("control");
 				Gson gson = new Gson();
 				// Log.d(TAG,"control: " + receivedCommand);
-				SerialReading controller = gson.fromJson(receivedCommand,SerialReading.class);
+				ControlCommand controller = gson.fromJson(receivedCommand, ControlCommand.class);
+
+				// encControlCommandList.add(controller);
+
 				if (controller != null && mSerialPortConnection != null) {
 					double throttle = (float)0.0;
 					double steering = controller.steering;
