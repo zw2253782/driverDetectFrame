@@ -143,7 +143,6 @@ public class UDPService extends Service implements Runnable {
     public void send(FrameData frameData, InetAddress remoteIPAddress, int remotePort) {
         try {
             byte[] payload = wrapFramePayload(frameData);
-            Log.d(TAG, "send data: " + payload.length);
             DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
             if (localSocket != null) {
                 localSocket.send(sendPacket);

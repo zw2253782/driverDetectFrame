@@ -60,6 +60,11 @@ public class FrameData implements Serializable {
         splitTotal = rawFrameData.length/len + (int)(rawFrameData.length%len == 0 ? 0 : 1);
         double ratio = this.getCompressRatio();
         int totalLen = this.rawFrameData.length;
+        if (totalLen == 1) {
+            res.add(this);
+            return res;
+        }
+
         for (int i = 0; i < splitTotal; ++i) {
             int curLen = Math.min(totalLen - len * i, len);
             byte[] newData = new byte[curLen];

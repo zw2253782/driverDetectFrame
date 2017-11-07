@@ -89,7 +89,7 @@ public class AvcEncoder
 
         // testing
         // MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR
-        mediaFormat.setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR);
+        // mediaFormat.setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR);
           
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);  
         mediaCodec.start();  
