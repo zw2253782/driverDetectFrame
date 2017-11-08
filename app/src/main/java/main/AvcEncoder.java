@@ -189,7 +189,7 @@ public class AvcEncoder
     }
 
 
-    // TODO: test if it works
+    // it works, change bitrate on the fly
     public void setBitrate(int targetBitrate) {
         Bundle bitrate = new Bundle();
         bitrate.putInt(MediaCodec.PARAMETER_KEY_VIDEO_BITRATE, targetBitrate);
