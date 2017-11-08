@@ -17,6 +17,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.Random;
 
 import utility.FrameData;
 import utility.JsonWraper;
@@ -144,6 +145,8 @@ public class UDPService extends Service implements Runnable {
     //send data back to UDPClient
     private static int lastIndex = -1;
     private static int streamingExtraLatency = 0;
+    private static Random rand = new Random();
+
     public void send(FrameData frameData, InetAddress remoteIPAddress, int remotePort) {
         try {
             byte[] payload = wrapFramePayload(frameData);
@@ -151,7 +154,7 @@ public class UDPService extends Service implements Runnable {
 
             if (frameData.rawFrameIndex != lastIndex) {
                 lastIndex = frameData.rawFrameIndex;
-                Thread.sleep(streamingExtraLatency);
+                Thread.sleep(rand.nextInt(streamingExtraLatency));
             }
             DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
             if (localSocket != null) {
