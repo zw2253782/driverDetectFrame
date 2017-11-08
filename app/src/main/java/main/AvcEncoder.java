@@ -32,7 +32,7 @@ public class AvcEncoder
     int cSize;
     int halfWidth;
     int halfHeight;
-
+    private static int rawFrameIndex = 0;
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
       
@@ -176,15 +176,24 @@ public class AvcEncoder
         byte[] ret = outputStream.toByteArray();
         outputStream.reset();
 
-        FrameData frameData = new FrameData(isIframe,ret, input.length);
+        FrameData frameData = new FrameData(rawFrameIndex++, isIframe, ret, input.length);
 
         return frameData;
     }
 
+    // it works
     public void forceIFrame() {
         Bundle b = new Bundle();
         b.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
         mediaCodec.setParameters(b);
+    }
+
+
+    // TODO: test if it works
+    public void setBitrate(int targetBitrate) {
+        Bundle bitrate = new Bundle();
+        bitrate.putInt(MediaCodec.PARAMETER_KEY_VIDEO_BITRATE, targetBitrate);
+        mediaCodec.setParameters(bitrate);
     }
     
     public byte[] YV12toYUV420PackedSemiPlanar(final byte[] input, final byte[] output, final int width, final int height) 

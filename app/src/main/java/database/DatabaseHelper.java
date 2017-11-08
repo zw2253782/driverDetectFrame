@@ -34,10 +34,11 @@ public class DatabaseHelper {
     private static final String frameSendTime = "frameSendTime";
     private static final String transmitSequence = "transmitSequence";
     private static final String roundLatency = "roundLatency";
-    private static final String oraginalSize = "oraginalSize";
+    private static final String originalSize = "originalSize";
     private static final String serverTime = "serverTime";
     private static final String compressedDataSize = "compressedDataSize";
     private static final String isIFrame = "isIFrame";
+    private static final String rawFrameIndex = "rawFrameIndex";
 
 
     /*rotation matrix*/
@@ -62,9 +63,9 @@ public class DatabaseHelper {
 
     private static final String CREATE_TABLE_LATENCY = "CREATE TABLE IF NOT EXISTS "
             + TABLE_LATENCY + "(" + transmitSequence + " INTEGER PRIMARY KEY,"
-            + frameSendTime + " REAL," +  roundLatency + " REAL,"
-            + oraginalSize + " REAL," + serverTime + " REAL," +  compressedDataSize + " REAL,"
-            + isIFrame + " REAL" + ")";
+            + frameSendTime + " INTEGER," +  roundLatency + " REAL,"
+            + originalSize + " INTEGER," + serverTime + " INTEGER," +  compressedDataSize + " INTEGER,"
+            + isIFrame + " INTEGER, " + rawFrameIndex + " INTEGER )";
 
     private static final String CREATE_TABLE_ROTATION_MATRIX = "CREATE TABLE IF NOT EXISTS "
             + TABLE_ROTATION_MATRIX + "(" + KEY_TIME + " INTEGER PRIMARY KEY,"
@@ -110,10 +111,11 @@ public class DatabaseHelper {
             values.put(frameSendTime, frameData.getFrameSendTime());
             values.put(transmitSequence, frameData.transmitSequence);
             values.put(roundLatency, frameData.roundLatency);
-            values.put(oraginalSize, frameData.originalDataSize);
+            values.put(originalSize, frameData.originalDataSize);
             values.put(serverTime, frameData.serverTime);
             values.put(compressedDataSize, frameData.compressedDataSize);
             values.put(isIFrame, frameData.isIFrame);
+            values.put(rawFrameIndex, frameData.rawFrameIndex);
             db_.insert(TABLE_LATENCY, null, values);
     }
 

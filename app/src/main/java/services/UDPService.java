@@ -17,6 +17,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.Random;
 
 import utility.FrameData;
 import utility.JsonWraper;
@@ -139,16 +140,30 @@ public class UDPService extends Service implements Runnable {
         System.arraycopy(body, 0, payload, header.length, body.length);
         return payload;
     }
+
+
     //send data back to UDPClient
+    private static int lastIndex = -1;
+    private static int streamingExtraLatency = 1;
+    private static Random rand = new Random();
+
     public void send(FrameData frameData, InetAddress remoteIPAddress, int remotePort) {
         try {
             byte[] payload = wrapFramePayload(frameData);
+            Log.d(TAG, frameData.rawFrameIndex + ", payload length:" + payload.length);
+
+            if (frameData.rawFrameIndex != lastIndex) {
+                lastIndex = frameData.rawFrameIndex;
+                Thread.sleep(rand.nextInt(streamingExtraLatency));
+            }
             DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
             if (localSocket != null) {
                 localSocket.send(sendPacket);
             }
         } catch (IOException e) {
             // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -158,7 +173,6 @@ public class UDPService extends Service implements Runnable {
         Gson gson = new Gson();
         FrameData frameData = gson.fromJson(frame, FrameData.class);
         frameData.roundLatency = System.currentTimeMillis() - frameData.getFrameSendTime();
-        // Log.d(TAG, gson.toJson(frameData));
         Intent intent = new Intent("udp");
         intent.putExtra("latency", gson.toJson(frameData));
 

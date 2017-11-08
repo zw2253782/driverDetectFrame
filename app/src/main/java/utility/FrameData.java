@@ -17,16 +17,18 @@ public class FrameData implements Serializable {
     public long compressedDataSize = 0;
     public long serverTime = 0;
 
+    public int rawFrameIndex = 0;
     public byte[] rawFrameData = null;
     public static long sequenceIndex = 0;
 
     public int splitTotal = 0; // 0 means no split
     public int splitIndex = 0; // index should be no larger than splitTotal
 
-    public FrameData (boolean isIFrame, byte[] data, int originalSize){
+    public FrameData (int rawFrameIndex, boolean isIFrame, byte[] data, int originalSize){
         this.type = "frame_data_from_car";
         this.frameSendTime = System.currentTimeMillis();
         this.isIFrame = isIFrame;
+        this.rawFrameIndex = rawFrameIndex;
 
         this.rawFrameData = data;
         // copy the first 65000
@@ -69,7 +71,9 @@ public class FrameData implements Serializable {
             int curLen = Math.min(totalLen - len * i, len);
             byte[] newData = new byte[curLen];
             System.arraycopy(this.rawFrameData, i * len, newData, 0, curLen);
-            FrameData newFrame = new FrameData(this.isIFrame, newData, (int)(curLen / this.getCompressRatio()));
+            //FrameData newFrame = new FrameData(this.rawFrameIndex, this.isIFrame, newData, (int)(curLen / this.getCompressRatio()));
+            FrameData newFrame = new FrameData(this.rawFrameIndex, this.isIFrame, newData, (int)(curLen / this.getCompressRatio()));
+
             newFrame.setSplitParams(this.splitTotal - 1, i);
             res.add(newFrame);
         }
