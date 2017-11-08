@@ -147,15 +147,28 @@ public class UDPService extends Service implements Runnable {
     private static int streamingExtraLatency = 1;
     private static Random rand = new Random();
 
+    private static long lastTimeStamp = 0;
+    private static int accumulatedSize = 0;
     public void send(FrameData frameData, InetAddress remoteIPAddress, int remotePort) {
         try {
             byte[] payload = wrapFramePayload(frameData);
-            Log.d(TAG, frameData.rawFrameIndex + ", payload length:" + payload.length);
 
             if (frameData.rawFrameIndex != lastIndex) {
                 lastIndex = frameData.rawFrameIndex;
                 Thread.sleep(rand.nextInt(streamingExtraLatency));
             }
+
+            if (lastTimeStamp == 0) {
+                lastTimeStamp = System.currentTimeMillis();
+            }
+            accumulatedSize += payload.length;
+            long now = System.currentTimeMillis();
+            if (now - lastTimeStamp > 1000) {
+                Log.d(TAG, "udp bitrate: " + accumulatedSize * 8 * 1000.0 / (now - lastTimeStamp) / 1000000.0 + "mbps");
+                lastTimeStamp = now;
+                accumulatedSize = 0;
+            }
+            //Log.d(TAG, frameData.rawFrameIndex + ", payload length:" + payload.length);
             DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
             if (localSocket != null) {
                 localSocket.send(sendPacket);

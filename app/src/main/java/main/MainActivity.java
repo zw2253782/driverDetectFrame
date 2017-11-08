@@ -345,11 +345,19 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				encoder.forceIFrame();
 			}
 			*/
+
 			// long time = System.currentTimeMillis();
 			FrameData frameData = encoder.offerEncoder(data);
 			// Log.d(TAG, String.valueOf(System.currentTimeMillis() - time));
 
-			List<FrameData> frames = frameData.split();
+            if (frameData.rawFrameIndex >= 500) {
+                encoder.setBitrate(500000);
+            }
+            if (frameData.rawFrameIndex >= 1000) {
+                encoder.setBitrate(2000000);
+            }
+
+            List<FrameData> frames = frameData.split();
 			for (int i = 0; i < frames.size(); ++i) {
 				FrameData frame = frames.get(i);
 				dbHelper_.insertFrameData(frame);
