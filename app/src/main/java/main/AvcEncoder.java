@@ -42,6 +42,7 @@ public class AvcEncoder
     
     public boolean init(int width, int height, int framerate, int bitrate)
     {
+        rawFrameIndex = 0;
         try 
         {
 			mediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
