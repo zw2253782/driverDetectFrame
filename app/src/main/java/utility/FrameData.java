@@ -72,7 +72,7 @@ public class FrameData implements Serializable {
             byte[] newData = new byte[curLen];
             System.arraycopy(this.rawFrameData, i * len, newData, 0, curLen);
             //FrameData newFrame = new FrameData(this.rawFrameIndex, this.isIFrame, newData, (int)(curLen / this.getCompressRatio()));
-            FrameData newFrame = new FrameData(this.rawFrameIndex, this.isIFrame, newData, (int)(curLen / this.getCompressRatio()));
+            FrameData newFrame = new FrameData(this.rawFrameIndex, this.isIFrame, newData, (int)(curLen * 100 / this.getCompressRatio()));
 
             newFrame.setSplitParams(this.splitTotal - 1, i);
             res.add(newFrame);
