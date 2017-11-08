@@ -239,7 +239,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		List<Double> bitRate = SettingsActivity.getBitRate(MainActivity.this);
 		if (bitRate.get(0) != null) {
 			double temp = bitRate.get(0);
-			this.frame_bitrate = (int) temp * 1000000;
+			this.frame_bitrate =  (int) (temp * 1000000.0);
 		}
 	}
 
@@ -271,6 +271,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		((Button) this.findViewById(R.id.btnstart)).setText("Stop");
 		this.findViewById(R.id.btntest).setEnabled(false);
 
+		Log.d(TAG,"frame_bitrate is:" + frame_bitrate);
 
 	}
 

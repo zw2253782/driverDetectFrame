@@ -144,7 +144,7 @@ public class UDPService extends Service implements Runnable {
 
     //send data back to UDPClient
     private static int lastIndex = -1;
-    private static int streamingExtraLatency = 1;
+    private static int streamingExtraLatency = 1; // > 0
     private static Random rand = new Random();
 
     private static long lastTimeStamp = 0;
