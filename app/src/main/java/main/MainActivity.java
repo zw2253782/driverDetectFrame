@@ -342,8 +342,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 		if (isStreaming) {
 			/*
-			if (FrameData.sequenceIndex%2 == 0) {
+			if (FrameData.sequenceIndex%10 == 0) {
 				encoder.forceIFrame();
+	            encoder.setBitrate((int)1e6);
 			}
 			*/
 			// long time = System.currentTimeMillis();
