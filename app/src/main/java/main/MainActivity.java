@@ -373,7 +373,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			for (int i = 0; i < encodelen; ++ i) {
 				header[i] = (byte)strlen.charAt(i);
 			}
-			header[encodelen] = '\n';
+            // start with the length of the frame
+            // header is nothing but the length of the current frame
+            header[encodelen] = '\n';
 			this.fOut_.write(header, 0, encodelen + 1);
 			this.fOut_.write(data, 0, data.length);
 		} catch (IOException e) {
