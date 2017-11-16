@@ -61,4 +61,5 @@ freeline.py
 freeline/
 freeline_project_description.json
 
+import-summary.txt
 src/main/jniLibs/

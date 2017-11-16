@@ -29,6 +29,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 
+import api.NativeClassAPI;
 import selfdriving.streaming.R;
 import com.google.gson.Gson;
 
@@ -44,6 +45,9 @@ import utility.ControlCommand;
 import utility.Trace;
 
 import static java.lang.Math.abs;
+
+import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Mat;
 
 
 public class MainActivity extends Activity implements SurfaceHolder.Callback, Camera.PreviewCallback {
@@ -80,12 +84,18 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	private int width = 640;
 	private int height = 480;
 
-	@Override
+    static {
+        System.loadLibrary("MyOpencvLibs");
+    }
+
+
+    @Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		this.setContentView(R.layout.activity_main);
 
+        NativeClassAPI.getAcceleration();
 		if (Build.MODEL.equals("Nexus 5X")){
 			//Nexus 5X's screen is reversed, ridiculous! the image sensor does not fit in correct orientation
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
