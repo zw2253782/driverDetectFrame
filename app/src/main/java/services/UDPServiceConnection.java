@@ -8,6 +8,7 @@ import android.util.Log;
 import java.net.InetAddress;
 
 import utility.FrameData;
+import utility.FramePacket;
 
 /**
  * Created by wei on 4/4/17.
@@ -30,7 +31,7 @@ public class UDPServiceConnection implements ServiceConnection {
     public boolean isRunning() {
         return binder.isRunning();
     }
-    public void sendData(FrameData data, InetAddress remoteIPAddress, int remotePort) {
+    public void sendData(FramePacket data, InetAddress remoteIPAddress, int remotePort) {
         if (data != null && remoteIPAddress!= null && String.valueOf(remotePort) != null){
             binder.sendData(data, remoteIPAddress, remotePort);
         }

@@ -20,6 +20,7 @@ import java.net.SocketException;
 import java.util.Random;
 
 import utility.FrameData;
+import utility.FramePacket;
 import utility.JsonWraper;
 
 public class UDPService extends Service implements Runnable {
@@ -39,9 +40,8 @@ public class UDPService extends Service implements Runnable {
         public boolean isRunning() {
             return UDPThreadRunning;
         }
-        public void sendData(FrameData data, InetAddress remoteIPAddress, int remotePort){
+        public void sendData(FramePacket data, InetAddress remoteIPAddress, int remotePort){
             send(data, remoteIPAddress, remotePort);
-
         }
     }
 
@@ -129,18 +129,16 @@ public class UDPService extends Service implements Runnable {
         Log.d(TAG, "stop UDP receiving thread");
     }
 
-
-    private byte[] wrapFramePayload(FrameData frameData) {
+    private byte[] wrapFramePacket(FramePacket framePacket) {
         Gson gson = new Gson();
-        byte [] body = frameData.rawFrameData;
-        frameData.rawFrameData = null;
-        byte [] header = gson.toJson(frameData).getBytes();
+        byte [] body = framePacket.data;
+        framePacket.data = null;
+        byte [] header = gson.toJson(framePacket).getBytes();
         byte[] payload = new byte[header.length + body.length];
         System.arraycopy(header, 0, payload, 0, header.length);
         System.arraycopy(body, 0, payload, header.length, body.length);
         return payload;
     }
-
 
     //send data back to UDPClient
     private static int lastIndex = -1;
@@ -149,12 +147,12 @@ public class UDPService extends Service implements Runnable {
 
     private static long lastTimeStamp = 0;
     private static int accumulatedSize = 0;
-    public void send(FrameData frameData, InetAddress remoteIPAddress, int remotePort) {
+    public void send(FramePacket framePacket, InetAddress remoteIPAddress, int remotePort) {
         try {
-            byte[] payload = wrapFramePayload(frameData);
+            byte[] payload = wrapFramePacket(framePacket);
 
-            if (frameData.rawFrameIndex != lastIndex) {
-                lastIndex = frameData.rawFrameIndex;
+            if (framePacket.index != lastIndex) {
+                lastIndex = framePacket.index;
                 Thread.sleep(rand.nextInt(streamingExtraLatency));
             }
 

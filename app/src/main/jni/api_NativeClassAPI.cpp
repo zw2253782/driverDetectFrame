@@ -34,11 +34,11 @@ JNIEXPORT jdouble JNICALL Java_api_NativeClassAPI_getAcceleration
   return 1.0;
   }
 
-JNIEXPORT void JNICALL Java_HelloJNI_initFEC(JNIEnv *env, jobject thisObj) {
+JNIEXPORT void JNICALL Java_api_NativeClassAPI_initFEC(JNIEnv *env, jobject thisObj) {
   FEClib::fec_init();
 }
 
-JNIEXPORT jbyteArray JNICALL Java_HelloJNI_sayHello(JNIEnv *env, jobject thisObj, jbyteArray data, jint blockSize, jint nrFecBlocks) {
+JNIEXPORT jbyteArray Java_api_NativeClassAPI_fecEncode(JNIEnv *env, jobject thisObj, jbyteArray data, jint blockSize, jint nrFecBlocks) {
   jsize lengthOfArray = env->GetArrayLength(data);
   jint k = lengthOfArray/blockSize;
   assert (lengthOfArray%blockSize == 0);

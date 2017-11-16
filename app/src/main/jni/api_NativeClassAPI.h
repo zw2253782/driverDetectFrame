@@ -36,7 +36,7 @@ JNIEXPORT jdouble JNICALL Java_api_NativeClassAPI_getAcceleration
  * Method:    initFEC
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_HelloJNI_initFEC
+JNIEXPORT void JNICALL Java_api_NativeClassAPI_initFEC
   (JNIEnv *, jobject);
 
 
@@ -45,7 +45,7 @@ JNIEXPORT void JNICALL Java_HelloJNI_initFEC
  * Method:    sayHello
  * Signature: ([BII)[B
  */
-JNIEXPORT jbyteArray JNICALL Java__api_NativeClassAPI_fecEncode
+JNIEXPORT jbyteArray JNICALL Java_api_NativeClassAPI_fecEncode
   (JNIEnv *, jobject, jbyteArray, jint, jint);
 
 

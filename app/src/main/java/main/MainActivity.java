@@ -507,7 +507,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				// the other thread will send without header and directly show the video.
 				appendToVideoFile(frameData.rawFrameData);
 				if (mUDPConnection != null && mUDPConnection.isRunning()) {
-					mUDPConnection.sendData(frameData, address, port);
+				    List<FramePacket> packets = frameData.encodeToFramePackets(0.0);
+				    for (int i = 0; i < packets.size(); ++i) {
+                        mUDPConnection.sendData(packets.get(i), address, port);
+                    }
 				}
 			}
 		}

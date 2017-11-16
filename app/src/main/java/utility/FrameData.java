@@ -111,6 +111,11 @@ public class FrameData implements Serializable {
             FramePacket packet = new FramePacket(this.frameSendTime, this.transmitSequence, blockSize, k, n, i + k);
             packets.add(packet);
         }
+
+        for (int i = 0; i < n; ++i) {
+            FramePacket cur = packets.get(i);
+            System.arraycopy(this.fecFrameData, 0, cur.data, i * blockSize, blockSize);
+        }
         return packets;
     }
 }

@@ -12,7 +12,7 @@ public class FramePacket implements Serializable {
 	public int k = 0;
 	public int n = 0;
 	public int index = 0; // 0 ... n - 1
-
+	public byte[] data = null;
 	public FramePacket() {
 		
 	}
@@ -24,5 +24,6 @@ public class FramePacket implements Serializable {
 		this.k = k;
 		this.n = n;
 		this.index = index;
+		this.data = new byte[len];
 	}
 }
