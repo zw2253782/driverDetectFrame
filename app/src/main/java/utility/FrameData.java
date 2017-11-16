@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import api.NativeClassAPI;
+
 
 public class FrameData implements Serializable {
     private static String TAG = FrameData.class.getSimpleName();
@@ -19,6 +21,7 @@ public class FrameData implements Serializable {
 
     public int rawFrameIndex = 0;
     public byte[] rawFrameData = null;
+    public byte[] fecFrameData = null;
     public static long sequenceIndex = 0;
 
     public int splitTotal = 0; // 0 means no split
@@ -78,5 +81,36 @@ public class FrameData implements Serializable {
             res.add(newFrame);
         }
         return res;
+    }
+
+    public List<FramePacket> encodeToFramePackets(double lossRate) {
+        List<FramePacket> packets = new ArrayList<FramePacket>();
+        int sz = this.rawFrameData.length;
+        final int referencePktSize = 2000;
+        // minimize padding
+        int needPadding = sz % referencePktSize == 0 ? 0 : 1;
+        int k = sz / referencePktSize + needPadding;
+        int blockSize = sz / k + needPadding;
+        int n = (int) Math.round(k * (1.0 + lossRate * 5.0));
+
+        this.fecFrameData = new byte[n * blockSize];
+        byte[] padding = new byte[k * blockSize - sz];
+        System.arraycopy(this.rawFrameData, 0, this.fecFrameData, 0, sz);
+        System.arraycopy(padding, 0, this.fecFrameData, sz, k * blockSize - sz);
+
+        for (int i = 0; i < k; ++i) {
+            FramePacket packet = new FramePacket(this.frameSendTime, this.transmitSequence, blockSize, k, n, i);
+            packets.add(packet);
+        }
+        if (n == k) {
+            return packets;
+        }
+        byte [] fec = NativeClassAPI.fecEcode(this.rawFrameData, blockSize, n - k);
+        System.arraycopy(fec, 0, this.fecFrameData, k * blockSize, (n - k) * blockSize);
+        for (int i = 0; i < n - k; ++i) {
+            FramePacket packet = new FramePacket(this.frameSendTime, this.transmitSequence, blockSize, k, n, i + k);
+            packets.add(packet);
+        }
+        return packets;
     }
 }

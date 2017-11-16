@@ -31,6 +31,24 @@ JNIEXPORT jdouble JNICALL Java_api_NativeClassAPI_getSteeringAngle
 JNIEXPORT jdouble JNICALL Java_api_NativeClassAPI_getAcceleration
   (JNIEnv *, jclass);
 
+/*
+ * Class:     HelloJNI
+ * Method:    initFEC
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_HelloJNI_initFEC
+  (JNIEnv *, jobject);
+
+
+/*
+ * Class:     HelloJNI
+ * Method:    sayHello
+ * Signature: ([BII)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java__api_NativeClassAPI_fecEncode
+  (JNIEnv *, jobject, jbyteArray, jint, jint);
+
+
 #ifdef __cplusplus
 }
 #endif

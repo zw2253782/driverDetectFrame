@@ -42,6 +42,7 @@ import services.SensorService;
 import utility.Constants;
 import utility.FrameData;
 import utility.ControlCommand;
+import utility.FramePacket;
 import utility.Trace;
 
 import static java.lang.Math.abs;
@@ -149,6 +150,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		long time = System.currentTimeMillis();
 		dbHelper_ = new DatabaseHelper();
 		dbHelper_.createDatabase(time);
+
+        NativeClassAPI.initFEC();
 
 		try {
 			File file = new File(Constants.kVideoFolder.concat(String.valueOf(time)).concat(".raw"));
@@ -296,11 +299,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	}
 
 	private void startCamera() {
-
-
 		Log.d(TAG, "width: " + width + " height:" + height);
-
-
 		this.previewHolder.setFixedSize(width, height);
 
 		int stride = (int) Math.ceil(width / 16.0f) * 16;
@@ -360,18 +359,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			// long time = System.currentTimeMillis();
 			FrameData frameData = encoder.offerEncoder(data);
 			// Log.d(TAG, String.valueOf(System.currentTimeMillis() - time));
-
-            List<FrameData> frames = frameData.split();
-			for (int i = 0; i < frames.size(); ++i) {
-				FrameData frame = frames.get(i);
-				dbHelper_.insertFrameData(frame);
-				if (frame.getDataSize() > 0) {
-					synchronized (encDataList) {
-						encDataList.add(frame);
-					}
-				}
-			}
-
+            dbHelper_.insertFrameData(frameData);
+            if (frameData.getDataSize() > 0) {
+                synchronized (encDataList) {
+                    encDataList.add(frameData);
+                }
+            }
 		}
 	}
 
