@@ -486,33 +486,33 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		@Override
 		public void run() {
 			while (isStreaming) {
-				boolean empty = false;
-				FrameData frameData = null;
+                boolean empty = false;
+                FrameData frameData = null;
 
-				synchronized (encDataList) {
-					if (encDataList.size() == 0) {
-						empty = true;
-					} else
-						frameData = encDataList.remove(0);
-				}
-				if (empty) {
-					try {
-						Thread.sleep(1);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					continue;
-				}
-				//we can start 2 thread, one is with timeStamp header send to one server and get timeStamp back
-				// the other thread will send without header and directly show the video.
-				appendToVideoFile(frameData.rawFrameData);
-				if (mUDPConnection != null && mUDPConnection.isRunning()) {
-				    List<FramePacket> packets = frameData.encodeToFramePackets(0.0);
-				    for (int i = 0; i < packets.size(); ++i) {
+                synchronized (encDataList) {
+                    if (encDataList.size() == 0) {
+                        empty = true;
+                    } else
+                        frameData = encDataList.remove(0);
+                }
+                if (empty) {
+                    try {
+                        Thread.sleep(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    continue;
+                }
+                //we can start 2 thread, one is with timeStamp header send to one server and get timeStamp back
+                // the other thread will send without header and directly show the video.
+                appendToVideoFile(frameData.rawFrameData);
+                List<FramePacket> packets = frameData.encodeToFramePackets(0.00);
+                for (int i = 0; i < packets.size(); ++i) {
+                    if (mUDPConnection != null && mUDPConnection.isRunning()) {
                         mUDPConnection.sendData(packets.get(i), address, port);
                     }
-				}
-			}
+                }
+            }
 		}
 	};
 

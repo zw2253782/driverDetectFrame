@@ -69,11 +69,11 @@ public class UDPService extends Service implements Runnable {
         Log.d(TAG,"Start UDP server");
         try {
             localSocket = new DatagramSocket(localPort);
+            (new Thread(this)).start();
         } catch (SocketException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        (new Thread(this)).start();
     }
 
 
@@ -137,6 +137,8 @@ public class UDPService extends Service implements Runnable {
         byte[] payload = new byte[header.length + body.length];
         System.arraycopy(header, 0, payload, 0, header.length);
         System.arraycopy(body, 0, payload, header.length, body.length);
+
+        Log.d(TAG, gson.toJson(framePacket));
         return payload;
     }
 
@@ -166,7 +168,6 @@ public class UDPService extends Service implements Runnable {
                 lastTimeStamp = now;
                 accumulatedSize = 0;
             }
-            Log.d(TAG, framePacket.frameSequence + ", " + framePacket.index + ", payload length:" + payload.length);
             DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
             if (localSocket != null) {
                 localSocket.send(sendPacket);

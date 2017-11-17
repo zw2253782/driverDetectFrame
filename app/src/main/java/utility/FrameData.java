@@ -79,11 +79,11 @@ public class FrameData implements Serializable {
             return packets;
         }
 
-        byte [] fec = NativeClassAPI.fecEcode(this.rawFrameData, blockSize, n - k);
+        byte [] fec = NativeClassAPI.fecEncode(this.fecFrameData, blockSize, n - k);
         System.arraycopy(fec, 0, this.fecFrameData, k * blockSize, (n - k) * blockSize);
         for (int i = 0; i < n - k; ++i) {
             FramePacket packet = new FramePacket(this.frameSendTime, this.transmitSequence, blockSize, k, n, i + k);
-            System.arraycopy(this.fecFrameData, i * blockSize, packet.data, 0, blockSize);
+            System.arraycopy(fec, i * blockSize, packet.data, 0, blockSize);
             packets.add(packet);
         }
 
