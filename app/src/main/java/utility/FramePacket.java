@@ -13,6 +13,7 @@ public class FramePacket implements Serializable {
 	public int n = 0;
 	public int index = 0; // 0 ... n - 1
 	public byte[] data = null;
+	public String type = "frame_data_from_car";
 	public FramePacket() {
 		
 	}

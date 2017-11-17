@@ -166,7 +166,7 @@ public class UDPService extends Service implements Runnable {
                 lastTimeStamp = now;
                 accumulatedSize = 0;
             }
-            //Log.d(TAG, frameData.rawFrameIndex + ", payload length:" + payload.length);
+            Log.d(TAG, framePacket.frameSequence + ", " + framePacket.index + ", payload length:" + payload.length);
             DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, remoteIPAddress, remotePort);
             if (localSocket != null) {
                 localSocket.send(sendPacket);

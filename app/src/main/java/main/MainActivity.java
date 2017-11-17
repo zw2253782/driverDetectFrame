@@ -68,7 +68,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	AvcEncoder encoder;
     boolean consistentControl = false;
 
-	private String ip = "192.168.11.2";
+	private String ip = "192.168.10.101";
 
 	public InetAddress address;
 	public final int port = 55555;
@@ -246,7 +246,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		this.width = resolution.get(0);
 		this.height = resolution.get(1);
 
-		this.ip = SettingsActivity.getRemoteIP(MainActivity.this);
+		// this.ip = SettingsActivity.getRemoteIP(MainActivity.this);
 		Log.d(TAG, "Resolution:" + this.width + "x" + this.height);
 
 		List<Double> bitRate = SettingsActivity.getBitRate(MainActivity.this);
