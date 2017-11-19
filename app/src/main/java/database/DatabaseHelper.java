@@ -38,7 +38,6 @@ public class DatabaseHelper {
     private static final String serverTime = "serverTime";
     private static final String compressedDataSize = "compressedDataSize";
     private static final String isIFrame = "isIFrame";
-    private static final String rawFrameIndex = "rawFrameIndex";
 
 
     /*rotation matrix*/
@@ -65,7 +64,7 @@ public class DatabaseHelper {
             + TABLE_LATENCY + "(" + transmitSequence + " INTEGER PRIMARY KEY,"
             + frameSendTime + " INTEGER," +  roundLatency + " REAL,"
             + originalSize + " INTEGER," + serverTime + " INTEGER," +  compressedDataSize + " INTEGER,"
-            + isIFrame + " INTEGER, " + rawFrameIndex + " INTEGER )";
+            + isIFrame + " INTEGER )";
 
     private static final String CREATE_TABLE_ROTATION_MATRIX = "CREATE TABLE IF NOT EXISTS "
             + TABLE_ROTATION_MATRIX + "(" + KEY_TIME + " INTEGER PRIMARY KEY,"
@@ -115,7 +114,6 @@ public class DatabaseHelper {
             values.put(serverTime, frameData.serverTime);
             values.put(compressedDataSize, frameData.compressedDataSize);
             values.put(isIFrame, frameData.isIFrame);
-            values.put(rawFrameIndex, frameData.rawFrameIndex);
             db_.insert(TABLE_LATENCY, null, values);
     }
 

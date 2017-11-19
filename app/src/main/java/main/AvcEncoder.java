@@ -32,18 +32,14 @@ public class AvcEncoder
     int cSize;
     int halfWidth;
     int halfHeight;
-    private static int rawFrameIndex = 0;
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
       
-    public AvcEncoder() 
-    {         
+    public AvcEncoder() {
     }  
     
-    public boolean init(int width, int height, int framerate, int bitrate)
-    {
-        rawFrameIndex = 0;
-        try 
+    public boolean init(int width, int height, int framerate, int bitrate) {
+        try
         {
 			mediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
 		}
@@ -91,7 +87,7 @@ public class AvcEncoder
         // testing
         // MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR
         // mediaFormat.setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR);
-          
+
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);  
         mediaCodec.start();  
         return true;
@@ -177,7 +173,7 @@ public class AvcEncoder
         byte[] ret = outputStream.toByteArray();
         outputStream.reset();
 
-        FrameData frameData = new FrameData(rawFrameIndex++, isIframe, ret, input.length);
+        FrameData frameData = new FrameData(isIframe, ret, input.length);
 
         return frameData;
     }

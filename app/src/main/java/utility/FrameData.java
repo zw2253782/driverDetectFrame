@@ -10,7 +10,6 @@ import api.NativeClassAPI;
 public class FrameData implements Serializable {
     private static String TAG = FrameData.class.getSimpleName();
 
-    public String type;
     private long frameSendTime;
     public long transmitSequence;
     public long roundLatency = 0;
@@ -19,36 +18,21 @@ public class FrameData implements Serializable {
     public long compressedDataSize = 0;
     public long serverTime = 0;
 
-    public int rawFrameIndex = 0;
     public byte[] rawFrameData = null;
     public byte[] fecFrameData = null;
     public static long sequenceIndex = 0;
 
-    public int splitTotal = 0; // 0 means no split
-    public int splitIndex = 0; // index should be no larger than splitTotal
-
-    public FrameData (int rawFrameIndex, boolean isIFrame, byte[] data, int originalSize){
-        this.type = "frame_data_from_car";
+    public FrameData (boolean isIFrame, byte[] data, int originalSize){
         this.frameSendTime = System.currentTimeMillis();
         this.isIFrame = isIFrame;
-        this.rawFrameIndex = rawFrameIndex;
-
         this.rawFrameData = data;
-        // copy the first 65000
         this.compressedDataSize = this.rawFrameData.length;
         this.originalDataSize = originalSize;
         this.transmitSequence = FrameData.sequenceIndex++;
-
-        double compressRatio = this.compressedDataSize * 100.0/this.originalDataSize;
-    }
-
-    public double getCompressRatio () {
-        return this.compressedDataSize * 100.0/this.originalDataSize;
     }
     public int getDataSize() {
         return rawFrameData.length;
     }
-
 
     public long getFrameSendTime() {
         return this.frameSendTime;

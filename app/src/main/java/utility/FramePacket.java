@@ -14,10 +14,7 @@ public class FramePacket implements Serializable {
 	public int index = 0; // 0 ... n - 1
 	public byte[] data = null;
 	public String type = "frame_data_from_car";
-	public FramePacket() {
-		
-	}
-	
+
 	public FramePacket(long sendTime, long frameSequence, int len, int k, int n, int index) {
 		this.packetSendTime = sendTime;
 		this.frameSequence = frameSequence;
