@@ -1,11 +1,13 @@
 package main;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -17,6 +19,7 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
+import android.media.Image;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
@@ -43,6 +46,7 @@ import utility.Constants;
 import utility.FrameData;
 import utility.ControlCommand;
 import utility.FramePacket;
+import utility.RawFrame;
 import utility.Trace;
 
 import static java.lang.Math.abs;
@@ -65,6 +69,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	SurfaceHolder previewHolder;
 	byte[] previewBuffer;
 	boolean isStreaming = false;
+
+	boolean storeRawFrames = false;
+	boolean loadFromRawFrames = true;
+
+
 	AvcEncoder encoder;
     boolean consistentControl = false;
 
@@ -80,10 +89,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	private static Intent mSensor = null;
 	private DatabaseHelper dbHelper_ = null;
 	private FileOutputStream fOut_ = null;
+	private FileInputStream fIn_ = null;
 
 	// width* height = 640 * 480 or 320 * 240
 	private int width = 640;
 	private int height = 480;
+	private int bitsPerPixel = 12;
 
     static {
         System.loadLibrary("MyOpencvLibs");
@@ -154,10 +165,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         NativeClassAPI.initFEC();
 
 		try {
-			File file = new File(Constants.kVideoFolder.concat(String.valueOf(time)).concat(".raw"));
-			this.fOut_ = new FileOutputStream(file, true);
-		} catch (Exception e) {
-			e.printStackTrace();
+			File outFile = new File(Constants.kVideoFolder.concat(String.valueOf(time)).concat(".raw"));
+			this.fOut_ = new FileOutputStream(outFile, true);
+
+            File inFile = new File(Constants.kVideoFolder.concat("1511124841992.raw"));
+            this.fIn_ = new FileInputStream(inFile);
+        } catch (Exception e) {
+			Log.e(TAG, e.getMessage());
 		}
 
 		latencyMonitor = new LatencyMonitor();
@@ -189,13 +203,22 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		if (dbHelper_!= null) {
 			dbHelper_.closeDatabase();
 		}
-		if (fOut_ != null) {
-			try {
-				fOut_.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+        if (this.fOut_ != null) {
+            try {
+                this.fOut_.close();
+                this.fOut_ = null;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if (this.fIn_ != null) {
+            try {
+                this.fIn_.close();
+                this.fIn_ = null;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 		if (mMessageReceiver!= null) {
 			LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
 		}
@@ -315,13 +338,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 			Camera.Parameters params = camera.getParameters();
 			params.setPreviewSize(width, height);
-			params.setPreviewFormat(ImageFormat.YV12);
-			camera.setParameters(params);
+            params.setPreviewFormat(ImageFormat.YV12);
+            this.bitsPerPixel = ImageFormat.getBitsPerPixel(ImageFormat.YV12);
+            camera.setParameters(params);
 			camera.addCallbackBuffer(previewBuffer);
 			camera.setPreviewCallbackWithBuffer(this);
 			camera.startPreview();
-
-			// adjust the orientation
+            // adjust the orientation
 			camera.setDisplayOrientation(0);
 		} catch (IOException e) {
 			//TODO:
@@ -345,11 +368,35 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	 * @param data
 	 * @param camera
 	 */
+	private static int index = 0;
 	@Override
 	public void onPreviewFrame(byte[] data, Camera camera) {
 		camera.addCallbackBuffer(previewBuffer);
 
-		if (isStreaming) {
+		// replay the video frames
+		if (loadFromRawFrames == true && this.fIn_ != null) {
+		    int sz = this.width * this.height * this.bitsPerPixel / 8 + RawFrame.requiredSpace;
+		    byte [] buffer = new byte[sz];
+		    try {
+                this.fIn_.read(buffer, index * sz, sz);
+                byte [] header = Arrays.copyOfRange(buffer, 0, RawFrame.requiredSpace);
+                byte [] frame = Arrays.copyOfRange(buffer, RawFrame.requiredSpace, sz);
+                FrameData frameData = encoder.offerEncoder(frame);
+                Gson gson = new Gson();
+                RawFrame rawFrame = gson.fromJson(new String(header), RawFrame.class);
+                rawFrame.dataSize = frameData.compressedDataSize;
+                appendToVideoFile(rawFrame, frameData.rawFrameData);
+            } catch (Exception e) {
+		        Log.e(TAG, e.getMessage());
+		        try {
+		            this.fIn_.close();
+		            this.fIn_ = null;
+                } catch (Exception eIn) {
+		            Log.e(TAG, eIn.getMessage());
+                }
+            }
+        }
+        if (isStreaming && loadFromRawFrames == false && data.length > 0) {
 			/*
 			if (FrameData.sequenceIndex%10 == 0) {
 				encoder.forceIFrame();
@@ -357,10 +404,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			}
 			*/
 			// long time = System.currentTimeMillis();
-			FrameData frameData = encoder.offerEncoder(data);
-			// Log.d(TAG, String.valueOf(System.currentTimeMillis() - time));
+
+            FrameData frameData = encoder.offerEncoder(data);
             dbHelper_.insertFrameData(frameData);
-            if (frameData.getDataSize() > 0) {
+            if (storeRawFrames) {
+                RawFrame rawFrame = new RawFrame(frameData, this.gyro, this.gps);
+                appendToVideoFile(rawFrame, data);
+            } else {
+                // appendToVideoFile(frameData, data);
                 synchronized (encDataList) {
                     encDataList.add(frameData);
                 }
@@ -368,20 +419,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		}
 	}
 
-	private void appendToVideoFile(byte [] data) {
+	private void appendToVideoFile(Object header, byte [] data) {
 		try {
-			int datalen = data.length;
-			String strlen = String.valueOf(datalen);
-			int encodelen = strlen.length();
-			byte [] header = new byte[encodelen + 1];
-			for (int i = 0; i < encodelen; ++ i) {
-				header[i] = (byte)strlen.charAt(i);
-			}
-            // start with the length of the frame
-            // header is nothing but the length of the current frame
-            header[encodelen] = '\n';
-			this.fOut_.write(header, 0, encodelen + 1);
-			this.fOut_.write(data, 0, data.length);
+		    Gson gson = new Gson();
+		    byte [] fHeader = gson.toJson(header).getBytes();
+		    byte [] headerPadding = new byte[RawFrame.requiredSpace - fHeader.length];
+		    Arrays.fill(headerPadding, (byte)' ');
+            this.fOut_.write(fHeader, 0, fHeader.length);
+            this.fOut_.write(headerPadding, 0, RawFrame.requiredSpace - fHeader.length);
+            this.fOut_.write(data, 0, data.length);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -436,6 +482,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	}
 
 
+	private Trace gyro = null;
+	private Trace gps = null;
 	private BroadcastReceiver mMessageReceiver = new BroadcastReceiver(){
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -444,7 +492,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				String message = intent.getStringExtra("trace");
 				Trace trace = new Trace();
 				trace.fromJson(message);
+				if (trace.type.compareTo(Trace.GYROSCOPE) == 0) {
+				    gyro = trace;
+                } else if (trace.type.compareTo(Trace.GPS) == 0) {
+				    gps = trace;
+                } else {
 
+                }
 				if (dbHelper_.isOpen()) {
 					dbHelper_.insertSensorData(trace);
 				}
@@ -505,7 +559,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 }
                 //we can start 2 thread, one is with timeStamp header send to one server and get timeStamp back
                 // the other thread will send without header and directly show the video.
-                appendToVideoFile(frameData.rawFrameData);
                 List<FramePacket> packets = frameData.encodeToFramePackets(0.00);
                 for (int i = 0; i < packets.size(); ++i) {
                     if (mUDPConnection != null && mUDPConnection.isRunning()) {

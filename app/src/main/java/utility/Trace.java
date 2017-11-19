@@ -30,10 +30,11 @@ public class Trace implements Serializable {
 
     }
 
-    public Trace(int d) {
+    public Trace(int d, String type) {
         time = 0;
         dim = d;
         values = new double [dim];
+        this.type = type;
     }
 
     public void setValues(double x, double y, double z) {

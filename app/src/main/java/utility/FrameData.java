@@ -10,7 +10,7 @@ import api.NativeClassAPI;
 public class FrameData implements Serializable {
     private static String TAG = FrameData.class.getSimpleName();
 
-    private long frameSendTime;
+    public long frameSendTime;
     public long transmitSequence;
     public long roundLatency = 0;
     public boolean isIFrame = false;

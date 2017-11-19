@@ -121,8 +121,7 @@ public class UDPService extends Service implements Runnable {
                 }
 
             } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                Log.e(TAG, e.getMessage());
                 break;
             }
         }
