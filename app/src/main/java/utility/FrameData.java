@@ -18,6 +18,10 @@ public class FrameData implements Serializable {
     public long compressedDataSize = 0;
     public long serverTime = 0;
 
+    public double lossRate = 0.0;
+    public int N = 0;
+    public int K = 0;
+
     public byte[] rawFrameData = null;
     public byte[] fecFrameData = null;
     public static long sequenceIndex = 0;
@@ -45,28 +49,28 @@ public class FrameData implements Serializable {
         final int referencePktSize = 2000;
         // minimize padding
         int needPadding = sz % referencePktSize == 0 ? 0 : 1;
-        int k = sz / referencePktSize + needPadding;
-        int blockSize = sz / k + needPadding;
-        int n = (int) Math.round(k * (1.0 + lossRate * 5.0));
+        this.K = sz / referencePktSize + needPadding;
+        int blockSize = sz / K + needPadding;
+        this.N = (int) Math.round(K * (1.0 + lossRate * 5.0));
 
-        this.fecFrameData = new byte[n * blockSize];
-        byte[] padding = new byte[k * blockSize - sz];
+        this.fecFrameData = new byte[N * blockSize];
+        byte[] padding = new byte[K * blockSize - sz];
         System.arraycopy(this.rawFrameData, 0, this.fecFrameData, 0, sz);
-        System.arraycopy(padding, 0, this.fecFrameData, sz, k * blockSize - sz);
+        System.arraycopy(padding, 0, this.fecFrameData, sz, K * blockSize - sz);
 
-        for (int i = 0; i < k; ++i) {
-            FramePacket packet = new FramePacket(this.frameSendTime, this.transmitSequence, blockSize, k, n, i);
+        for (int i = 0; i < K; ++i) {
+            FramePacket packet = new FramePacket(this.frameSendTime, this.transmitSequence, blockSize, this.K, this.N, i);
             System.arraycopy(this.fecFrameData, i * blockSize, packet.data, 0, blockSize);
             packets.add(packet);
         }
-        if (n == k) {
+        if (this.N == this.K) {
             return packets;
         }
-
-        byte [] fec = NativeClassAPI.fecEncode(this.fecFrameData, blockSize, n - k);
-        System.arraycopy(fec, 0, this.fecFrameData, k * blockSize, (n - k) * blockSize);
-        for (int i = 0; i < n - k; ++i) {
-            FramePacket packet = new FramePacket(this.frameSendTime, this.transmitSequence, blockSize, k, n, i + k);
+        int extra = this.N - this.K;
+        byte [] fec = NativeClassAPI.fecEncode(this.fecFrameData, blockSize, extra);
+        System.arraycopy(fec, 0, this.fecFrameData, this.K * blockSize, extra * blockSize);
+        for (int i = 0; i < extra; ++i) {
+            FramePacket packet = new FramePacket(this.frameSendTime, this.transmitSequence, blockSize, this.K, this.N, i + this.K);
             System.arraycopy(fec, i * blockSize, packet.data, 0, blockSize);
             packets.add(packet);
         }

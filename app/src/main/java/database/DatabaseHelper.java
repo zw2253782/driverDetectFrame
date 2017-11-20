@@ -38,11 +38,21 @@ public class DatabaseHelper {
     private static final String serverTime = "serverTime";
     private static final String compressedDataSize = "compressedDataSize";
     private static final String isIFrame = "isIFrame";
+    private static final String lossRate = "lossRate";
+    private static final String N = "n";
+    private static final String K = "k";
+
+
+    private static final String CREATE_TABLE_LATENCY = "CREATE TABLE IF NOT EXISTS "
+            + TABLE_LATENCY + "(" + transmitSequence + " INTEGER PRIMARY KEY,"
+            + frameSendTime + " INTEGER," +  roundLatency + " REAL,"
+            + originalSize + " INTEGER," + serverTime + " INTEGER," +  compressedDataSize + " INTEGER,"
+            + isIFrame + " INTEGER, " +  lossRate + " REAL, " + N + " INTEGER, " + "k" +  " INTEGER)";
+
 
 
     /*rotation matrix*/
     private static final String KEY_VALUES[] = {"x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8"};
-
 
     // Table Create Statements
 
@@ -58,13 +68,6 @@ public class DatabaseHelper {
     private static final String CREATE_TABLE_MAGNETOMETER = "CREATE TABLE IF NOT EXISTS "
             + TABLE_MAGNETOMETER + "(" + KEY_TIME + " INTEGER PRIMARY KEY," + KEY_VALUES[0]
             + " REAL," + KEY_VALUES[1] + " REAL," +  KEY_VALUES[2] + " REAL" + ");";
-
-
-    private static final String CREATE_TABLE_LATENCY = "CREATE TABLE IF NOT EXISTS "
-            + TABLE_LATENCY + "(" + transmitSequence + " INTEGER PRIMARY KEY,"
-            + frameSendTime + " INTEGER," +  roundLatency + " REAL,"
-            + originalSize + " INTEGER," + serverTime + " INTEGER," +  compressedDataSize + " INTEGER,"
-            + isIFrame + " INTEGER )";
 
     private static final String CREATE_TABLE_ROTATION_MATRIX = "CREATE TABLE IF NOT EXISTS "
             + TABLE_ROTATION_MATRIX + "(" + KEY_TIME + " INTEGER PRIMARY KEY,"
@@ -103,18 +106,19 @@ public class DatabaseHelper {
         return this.opened;
     }
 
-    //private String[] dataName = {"frameSendTime","transmitSequence","roundLatency","oraginalSize"};
-
     public void insertFrameData(FrameData frameData) {
-            ContentValues values = new ContentValues();
-            values.put(frameSendTime, frameData.getFrameSendTime());
-            values.put(transmitSequence, frameData.transmitSequence);
-            values.put(roundLatency, frameData.roundLatency);
-            values.put(originalSize, frameData.originalDataSize);
-            values.put(serverTime, frameData.serverTime);
-            values.put(compressedDataSize, frameData.compressedDataSize);
-            values.put(isIFrame, frameData.isIFrame);
-            db_.insert(TABLE_LATENCY, null, values);
+
+        ContentValues values = new ContentValues();
+        values.put(frameSendTime, frameData.getFrameSendTime());
+        values.put(transmitSequence, frameData.transmitSequence);
+        values.put(roundLatency, frameData.roundLatency);
+        values.put(originalSize, frameData.originalDataSize);
+        values.put(serverTime, frameData.serverTime);
+        values.put(compressedDataSize, frameData.compressedDataSize);
+        values.put(lossRate, frameData.lossRate);
+        values.put(N, frameData.N);
+        values.put(K, frameData.K);
+        db_.insert(TABLE_LATENCY, null, values);
     }
 
 
@@ -125,6 +129,7 @@ public class DatabaseHelper {
         args.put(roundLatency, updatedFrameData.roundLatency);
         //Log.d(TAG,"round latency:" + roundLatency);
         args.put(serverTime,updatedFrameData.serverTime);
+        args.put(lossRate,updatedFrameData.lossRate);
 
         String where = " transmitSequence = ? ";
         String[] whereArgs = {String.valueOf(updatedFrameData.transmitSequence)};

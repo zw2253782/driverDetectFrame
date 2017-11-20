@@ -71,7 +71,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	boolean isStreaming = false;
 
 	boolean storeRawFrames = false;
-	boolean loadFromRawFrames = true;
+	boolean loadFromRawFrames = false;
 
 
 	AvcEncoder encoder;
@@ -406,7 +406,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			// long time = System.currentTimeMillis();
 
             FrameData frameData = encoder.offerEncoder(data);
-            dbHelper_.insertFrameData(frameData);
             if (storeRawFrames) {
                 RawFrame rawFrame = new RawFrame(frameData, this.gyro, this.gps);
                 appendToVideoFile(rawFrame, data);
@@ -512,7 +511,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				if (dbHelper_.isOpen()) {
 					dbHelper_.updateFrameData(frameData);
 				}
-				//Log.d(TAG, "frame data update: " + dbHelper_.updateFrameData(frameData));
+				Log.d(TAG, "frame data update: " + message);
 
 			} else if (intent.getAction().equals("control")){
 				String receivedCommand = intent.getStringExtra("control");
@@ -565,7 +564,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                         mUDPConnection.sendData(packets.get(i), address, port);
                     }
                 }
-            }
+				// happens after transmission to learn all parameters
+				dbHelper_.insertFrameData(frameData);
+			}
 		}
 	};
 

@@ -186,7 +186,6 @@ public class UDPService extends Service implements Runnable {
         frameData.roundLatency = System.currentTimeMillis() - frameData.getFrameSendTime();
         Intent intent = new Intent("udp");
         intent.putExtra("latency", gson.toJson(frameData));
-
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
