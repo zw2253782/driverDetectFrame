@@ -128,7 +128,6 @@ public class DatabaseHelper {
         int cnt = 0;
         long time = System.currentTimeMillis() - duration;
         String query = "select lossRate, N from latency where roundLatency > 0.0 and frameSendTime > " + String.valueOf(time);
-        if (db_ == null) return loss;
         Cursor cursor = db_.rawQuery(query, null);
         if (cursor.moveToFirst()) {
             do {
