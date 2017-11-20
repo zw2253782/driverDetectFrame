@@ -2,6 +2,7 @@ package database;
 
 
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -100,6 +101,7 @@ public class DatabaseHelper {
         this.opened = false;
         if(db_ != null && db_.isOpen()) {
             db_.close();
+            db_ = null;
         }
     }
     public boolean isOpen() {
@@ -107,7 +109,6 @@ public class DatabaseHelper {
     }
 
     public void insertFrameData(FrameData frameData) {
-
         ContentValues values = new ContentValues();
         values.put(frameSendTime, frameData.getFrameSendTime());
         values.put(transmitSequence, frameData.transmitSequence);
@@ -115,16 +116,34 @@ public class DatabaseHelper {
         values.put(originalSize, frameData.originalDataSize);
         values.put(serverTime, frameData.serverTime);
         values.put(compressedDataSize, frameData.compressedDataSize);
+        values.put(isIFrame, frameData.isIFrame);
         values.put(lossRate, frameData.lossRate);
         values.put(N, frameData.N);
         values.put(K, frameData.K);
         db_.insert(TABLE_LATENCY, null, values);
     }
 
+    public double getLossRate(long duration) {
+        double loss = 0.0;
+        int cnt = 0;
+        long time = System.currentTimeMillis() - duration;
+        String query = "select lossRate, N from latency where roundLatency > 0.0 and frameSendTime > " + String.valueOf(time);
+        if (db_ == null) return loss;
+        Cursor cursor = db_.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            do {
+                int curCnt = cursor.getInt(1);
+                cnt += curCnt;
+                loss += cursor.getDouble(0) * curCnt;
+            } while(cursor.moveToNext());
+        }
+        cursor.close();
+        if (cnt == 0) return 0.0;
+        return loss/(double)cnt;
+    }
 
     public int updateFrameData(FrameData updatedFrameData) {
         // Log.d(TAG, "updateFrameData");
-
         ContentValues args = new ContentValues();
         args.put(roundLatency, updatedFrameData.roundLatency);
         //Log.d(TAG,"round latency:" + roundLatency);
@@ -133,7 +152,8 @@ public class DatabaseHelper {
 
         String where = " transmitSequence = ? ";
         String[] whereArgs = {String.valueOf(updatedFrameData.transmitSequence)};
-        return db_.update(TABLE_LATENCY, args, where, whereArgs);
+        int res = db_.update(TABLE_LATENCY, args, where, whereArgs);
+        return res;
     }
 
     public void insertSensorData(Trace trace) {
@@ -158,8 +178,4 @@ public class DatabaseHelper {
             assert 0 == 1;
         }
     }
-
-
-
-
 }

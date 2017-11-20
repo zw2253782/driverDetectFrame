@@ -136,8 +136,6 @@ public class UDPService extends Service implements Runnable {
         byte[] payload = new byte[header.length + body.length];
         System.arraycopy(header, 0, payload, 0, header.length);
         System.arraycopy(body, 0, payload, header.length, body.length);
-
-        Log.d(TAG, gson.toJson(framePacket));
         return payload;
     }
 

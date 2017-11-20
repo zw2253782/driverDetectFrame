@@ -85,6 +85,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	List<FrameData> encDataList = new LinkedList<FrameData>();
 	List<ControlCommand> encControlCommandList = new LinkedList<ControlCommand>();
 	LatencyMonitor latencyMonitor;
+	private double udpLossRate = 0.0;
 
 	private static Intent mSensor = null;
 	private DatabaseHelper dbHelper_ = null;
@@ -396,7 +397,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 }
             }
         }
-        if (isStreaming && loadFromRawFrames == false && data.length > 0) {
+        if (isStreaming && loadFromRawFrames == false) {
 			/*
 			if (FrameData.sequenceIndex%10 == 0) {
 				encoder.forceIFrame();
@@ -406,7 +407,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			// long time = System.currentTimeMillis();
 
             FrameData frameData = encoder.offerEncoder(data);
-            if (storeRawFrames) {
+            if (frameData.compressedDataSize == 0) {
+            	// do nothing
+			} else if (storeRawFrames) {
                 RawFrame rawFrame = new RawFrame(frameData, this.gyro, this.gps);
                 appendToVideoFile(rawFrame, data);
             } else {
@@ -558,14 +561,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 }
                 //we can start 2 thread, one is with timeStamp header send to one server and get timeStamp back
                 // the other thread will send without header and directly show the video.
-                List<FramePacket> packets = frameData.encodeToFramePackets(0.00);
-                for (int i = 0; i < packets.size(); ++i) {
+				double lossRate = 0.0;
+				if (dbHelper_.isOpen()) {
+					lossRate = dbHelper_.getLossRate(1000);
+					dbHelper_.insertFrameData(frameData);
+				}
+                List<FramePacket> packets = frameData.encodeToFramePackets(lossRate);
+				for (int i = 0; i < packets.size(); ++i) {
                     if (mUDPConnection != null && mUDPConnection.isRunning()) {
                         mUDPConnection.sendData(packets.get(i), address, port);
                     }
                 }
-				// happens after transmission to learn all parameters
-				dbHelper_.insertFrameData(frameData);
 			}
 		}
 	};

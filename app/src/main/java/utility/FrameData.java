@@ -1,5 +1,7 @@
 package utility;
 
+import android.util.Log;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +27,7 @@ public class FrameData implements Serializable {
     public byte[] rawFrameData = null;
     public byte[] fecFrameData = null;
     public static long sequenceIndex = 0;
-
+    public static final int referencePktSize = 2000;
     public FrameData (boolean isIFrame, byte[] data, int originalSize){
         this.frameSendTime = System.currentTimeMillis();
         this.isIFrame = isIFrame;
@@ -33,6 +35,14 @@ public class FrameData implements Serializable {
         this.compressedDataSize = this.rawFrameData.length;
         this.originalDataSize = originalSize;
         this.transmitSequence = FrameData.sequenceIndex++;
+
+        int sz = this.rawFrameData.length;
+
+        // minimize padding
+        int needPadding = sz % referencePktSize == 0 ? 0 : 1;
+        this.K = sz / referencePktSize + needPadding;
+        this.N = (int) Math.round(this.K * (1.0 + lossRate * 5.0));
+
     }
     public int getDataSize() {
         return rawFrameData.length;
@@ -45,14 +55,10 @@ public class FrameData implements Serializable {
 
     public List<FramePacket> encodeToFramePackets(double lossRate) {
         List<FramePacket> packets = new ArrayList<FramePacket>();
-        int sz = this.rawFrameData.length;
-        final int referencePktSize = 2000;
-        // minimize padding
-        int needPadding = sz % referencePktSize == 0 ? 0 : 1;
-        this.K = sz / referencePktSize + needPadding;
-        int blockSize = sz / K + needPadding;
-        this.N = (int) Math.round(K * (1.0 + lossRate * 5.0));
 
+        int sz = this.rawFrameData.length;
+        int needPadding = sz % referencePktSize == 0 ? 0 : 1;
+        int blockSize = sz / this.K + needPadding;
         this.fecFrameData = new byte[N * blockSize];
         byte[] padding = new byte[K * blockSize - sz];
         System.arraycopy(this.rawFrameData, 0, this.fecFrameData, 0, sz);
