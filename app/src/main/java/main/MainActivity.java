@@ -564,9 +564,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				double lossRate = 0.0;
 				if (dbHelper_.isOpen()) {
 					lossRate = dbHelper_.getLossRate(1000);
-					dbHelper_.insertFrameData(frameData);
 				}
                 List<FramePacket> packets = frameData.encodeToFramePackets(lossRate);
+				if (dbHelper_.isOpen()) {
+					dbHelper_.insertFrameData(frameData);
+				}
 				for (int i = 0; i < packets.size(); ++i) {
                     if (mUDPConnection != null && mUDPConnection.isRunning()) {
                         mUDPConnection.sendData(packets.get(i), address, port);

@@ -35,14 +35,6 @@ public class FrameData implements Serializable {
         this.compressedDataSize = this.rawFrameData.length;
         this.originalDataSize = originalSize;
         this.transmitSequence = FrameData.sequenceIndex++;
-
-        int sz = this.rawFrameData.length;
-
-        // minimize padding
-        int needPadding = sz % referencePktSize == 0 ? 0 : 1;
-        this.K = sz / referencePktSize + needPadding;
-        this.N = (int) Math.round(this.K * (1.0 + lossRate * 5.0));
-
     }
     public int getDataSize() {
         return rawFrameData.length;
@@ -53,11 +45,14 @@ public class FrameData implements Serializable {
     }
 
 
-    public List<FramePacket> encodeToFramePackets(double lossRate) {
+    public List<FramePacket> encodeToFramePackets(double loss) {
         List<FramePacket> packets = new ArrayList<FramePacket>();
 
         int sz = this.rawFrameData.length;
         int needPadding = sz % referencePktSize == 0 ? 0 : 1;
+        this.K = sz / referencePktSize + needPadding;
+        this.N = (int) Math.round(this.K * (1.0 + loss * 5.0));
+
         int blockSize = sz / this.K + needPadding;
         this.fecFrameData = new byte[N * blockSize];
         byte[] padding = new byte[K * blockSize - sz];
