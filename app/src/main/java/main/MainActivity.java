@@ -39,6 +39,8 @@ import com.google.gson.Gson;
 import database.DatabaseHelper;
 import services.SerialPortConnection;
 import services.SerialPortService;
+import services.TCPClientService;
+import services.TCPClientServiceConnection;
 import services.UDPServiceConnection;
 import services.UDPService;
 import services.SensorService;
@@ -78,14 +80,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     boolean consistentControl = false;
 
 	private String ip = "192.168.10.101";
-
 	public InetAddress address;
 	public final int port = 55555;
 
 	List<FrameData> encDataList = new LinkedList<FrameData>();
 	List<ControlCommand> encControlCommandList = new LinkedList<ControlCommand>();
 	LatencyMonitor latencyMonitor;
-	private double udpLossRate = 0.0;
 
 	private static Intent mSensor = null;
 	private DatabaseHelper dbHelper_ = null;
@@ -97,10 +97,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	private int height = 480;
 	private int bitsPerPixel = 12;
 
+	//////
+	private boolean useTCP = false;
+
     static {
         System.loadLibrary("MyOpencvLibs");
     }
-
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -151,10 +153,23 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 
 	private void startServices() {
+		try {
+			this.address = InetAddress.getByName(ip);
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+			return;
+		}
 		startSerialService();
-		startUDPService();
+
+		if(this.useTCP) {
+			startTCPClientService();
+		} else {
+			startUDPService();
+		}
+
 		mSensor = new Intent(this, SensorService.class);
 		startService(mSensor);
+
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("sensor"));
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("udp"));
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("control"));
@@ -195,7 +210,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	}
 
 	private void stopServices() {
-		stopUDPService();
+    	if (this.useTCP) {
+			stopTCPClientService();
+		} else {
+			stopUDPService();
+		}
 		stopSerialService();
 		if (mSensor!= null){
 			stopService(mSensor);
@@ -290,13 +309,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 		this.encoder = new AvcEncoder();
 		this.encoder.init(width, height, DEFAULT_FRAME_RATE, frame_bitrate);
-		try {
-			this.address = InetAddress.getByName(ip);
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return;
-		}
 
 		this.isStreaming = true;
 
@@ -369,7 +381,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	 * @param data
 	 * @param camera
 	 */
-	private static int index = 0;
 	@Override
 	public void onPreviewFrame(byte[] data, Camera camera) {
 		camera.addCallbackBuffer(previewBuffer);
@@ -379,7 +390,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		    int sz = this.width * this.height * this.bitsPerPixel / 8 + RawFrame.requiredSpace;
 		    byte [] buffer = new byte[sz];
 		    try {
-                this.fIn_.read(buffer, index * sz, sz);
+                this.fIn_.read(buffer, 0, sz);
                 byte [] header = Arrays.copyOfRange(buffer, 0, RawFrame.requiredSpace);
                 byte [] frame = Arrays.copyOfRange(buffer, RawFrame.requiredSpace, sz);
                 FrameData frameData = encoder.offerEncoder(frame);
@@ -439,7 +450,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	//initial UDPConnetion
 	private static Intent mUDPService = null;
 	private static UDPServiceConnection mUDPConnection = null;
-
 	private void startUDPService() {
 		Log.d(TAG, "startUDPService");
 		mUDPService = new Intent(this, UDPService.class);
@@ -456,6 +466,25 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			mUDPConnection = null;
 		}
 	}
+	//initial UDPConnetion
+	private static Intent mTCPClientService = null;
+	private static TCPClientServiceConnection mTCPClientServiceConnection = null;
+	private void startTCPClientService() {
+		Log.d(TAG, "start TCPClientService");
+		mTCPClientService = new Intent(this, TCPClientService.class);
+		mTCPClientServiceConnection = new TCPClientServiceConnection();
+		bindService(mTCPClientService, mTCPClientServiceConnection, Context.BIND_AUTO_CREATE);
+		startService(mTCPClientService);
+	}
+	private void stopTCPClientService() {
+		if (mTCPClientService != null && mTCPClientServiceConnection != null) {
+			unbindService(mTCPClientServiceConnection);
+			stopService(mTCPClientService);
+			mTCPClientService = null;
+			mTCPClientServiceConnection = null;
+		}
+	}
+
 
 	//initial SerialPortConnection
 	private static Intent mSerial = null;
@@ -570,7 +599,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 					dbHelper_.insertFrameData(frameData);
 				}
 				for (int i = 0; i < packets.size(); ++i) {
-                    if (mUDPConnection != null && mUDPConnection.isRunning()) {
+					if(useTCP && mTCPClientServiceConnection != null && mTCPClientServiceConnection.isRunning()) {
+						mTCPClientServiceConnection.sendData(packets.get(i));
+					}
+                    if (!useTCP && mUDPConnection != null && mUDPConnection.isRunning()) {
                         mUDPConnection.sendData(packets.get(i), address, port);
                     }
                 }

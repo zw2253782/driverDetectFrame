@@ -128,17 +128,6 @@ public class UDPService extends Service implements Runnable {
         Log.d(TAG, "stop UDP receiving thread");
     }
 
-    private byte[] wrapFramePacket(FramePacket framePacket) {
-        Gson gson = new Gson();
-        byte [] body = framePacket.data;
-        framePacket.data = null;
-        byte [] header = gson.toJson(framePacket).getBytes();
-        byte[] payload = new byte[header.length + body.length];
-        System.arraycopy(header, 0, payload, 0, header.length);
-        System.arraycopy(body, 0, payload, header.length, body.length);
-        return payload;
-    }
-
     //send data back to UDPClient
     private static int lastIndex = -1;
     private static int streamingExtraLatency = 1; // > 0
@@ -148,7 +137,7 @@ public class UDPService extends Service implements Runnable {
     private static int accumulatedSize = 0;
     public void send(FramePacket framePacket, InetAddress remoteIPAddress, int remotePort) {
         try {
-            byte[] payload = wrapFramePacket(framePacket);
+            byte[] payload = framePacket.toBytePacket();
 
             if (framePacket.index != lastIndex) {
                 lastIndex = framePacket.index;

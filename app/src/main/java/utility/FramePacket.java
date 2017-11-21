@@ -1,6 +1,11 @@
 package utility;
 
+import android.util.Log;
+
+import com.google.gson.Gson;
+
 import java.io.Serializable;
+import java.util.Arrays;
 
 
 public class FramePacket implements Serializable {
@@ -15,6 +20,7 @@ public class FramePacket implements Serializable {
 	public byte[] data = null;
 	public String type = "frame_data_from_car";
 
+	public static final int requiredSpace = 150; // should be larger than the gson format itself
 	public FramePacket(long sendTime, long frameSequence, int len, int k, int n, int index) {
 		this.packetSendTime = sendTime;
 		this.frameSequence = frameSequence;
@@ -24,4 +30,19 @@ public class FramePacket implements Serializable {
 		this.index = index;
 		this.data = new byte[len];
 	}
+
+	public byte[] toBytePacket() {
+		Gson gson = new Gson();
+		byte [] body = this.data;
+		this.data = null;
+		byte [] header = gson.toJson(this).getBytes();
+		byte [] headerPadding = new byte[FramePacket.requiredSpace - header.length];
+		byte [] payload = new byte[FramePacket.requiredSpace + body.length];
+		Arrays.fill(headerPadding, (byte)' ');
+		System.arraycopy(header, 0, payload, 0, header.length);
+		System.arraycopy(headerPadding, 0, payload, header.length, headerPadding.length);
+		System.arraycopy(body, 0, payload, FramePacket.requiredSpace, body.length);
+		return payload;
+	}
+
 }
