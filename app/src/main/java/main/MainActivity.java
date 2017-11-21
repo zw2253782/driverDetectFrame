@@ -409,6 +409,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             }
         }
         if (isStreaming && loadFromRawFrames == false) {
+			double bandwidth = dbHelper_.getBandwidth(1000);
+			Log.d(TAG, "bandwidth:" + String.valueOf(bandwidth));
 			/*
 			if (FrameData.sequenceIndex%10 == 0) {
 				encoder.forceIFrame();
@@ -543,8 +545,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				if (dbHelper_.isOpen()) {
 					dbHelper_.updateFrameData(frameData);
 				}
-				Log.d(TAG, "frame data update: " + message);
-
 			} else if (intent.getAction().equals("control")){
 				String receivedCommand = intent.getStringExtra("control");
 				Gson gson = new Gson();

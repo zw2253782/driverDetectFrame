@@ -21,6 +21,7 @@ public class FrameData implements Serializable {
     public long serverTime = 0;
 
     public double lossRate = 0.0;
+    public double bandwidth = 0.0;
     public int N = 0;
     public int K = 0;
 

@@ -40,6 +40,7 @@ public class DatabaseHelper {
     private static final String compressedDataSize = "compressedDataSize";
     private static final String isIFrame = "isIFrame";
     private static final String lossRate = "lossRate";
+    private static final String bandwidth = "bandwidth";
     private static final String N = "n";
     private static final String K = "k";
 
@@ -48,7 +49,7 @@ public class DatabaseHelper {
             + TABLE_LATENCY + "(" + transmitSequence + " INTEGER PRIMARY KEY,"
             + frameSendTime + " INTEGER," +  roundLatency + " REAL,"
             + originalSize + " INTEGER," + serverTime + " INTEGER," +  compressedDataSize + " INTEGER,"
-            + isIFrame + " INTEGER, " +  lossRate + " REAL, " + N + " INTEGER, " + "k" +  " INTEGER)";
+            + isIFrame + " INTEGER, " +  lossRate + " REAL, " + bandwidth + " REAL, " + N + " INTEGER, " + "k" +  " INTEGER)";
 
 
 
@@ -118,9 +119,28 @@ public class DatabaseHelper {
         values.put(compressedDataSize, frameData.compressedDataSize);
         values.put(isIFrame, frameData.isIFrame);
         values.put(lossRate, frameData.lossRate);
+        values.put(bandwidth, frameData.bandwidth);
         values.put(N, frameData.N);
         values.put(K, frameData.K);
         db_.insert(TABLE_LATENCY, null, values);
+    }
+
+    public double getBandwidth(long duration) {
+        double throughput = 0.0;
+        int cnt = 0;
+        long time = System.currentTimeMillis() - duration;
+        String query = "select bandwidth, N from latency where roundLatency > 0.0 and frameSendTime > " + String.valueOf(time);
+        Cursor cursor = db_.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            do {
+                int curCnt = cursor.getInt(1);
+                cnt += curCnt;
+                throughput += cursor.getDouble(0) * curCnt;
+            } while(cursor.moveToNext());
+        }
+        cursor.close();
+        if (cnt == 0) return 0.0;
+        return throughput/(double)cnt;
     }
 
     public double getLossRate(long duration) {
@@ -148,7 +168,7 @@ public class DatabaseHelper {
         //Log.d(TAG,"round latency:" + roundLatency);
         args.put(serverTime,updatedFrameData.serverTime);
         args.put(lossRate,updatedFrameData.lossRate);
-
+        args.put(bandwidth,updatedFrameData.bandwidth);
         String where = " transmitSequence = ? ";
         String[] whereArgs = {String.valueOf(updatedFrameData.transmitSequence)};
         int res = db_.update(TABLE_LATENCY, args, where, whereArgs);
