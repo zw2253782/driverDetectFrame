@@ -51,6 +51,7 @@ import utility.FramePacket;
 import utility.RawFrame;
 import utility.Trace;
 
+
 import static java.lang.Math.abs;
 
 import org.opencv.android.OpenCVLoader;
@@ -598,6 +599,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				if (dbHelper_.isOpen()) {
 					dbHelper_.insertFrameData(frameData);
 				}
+				Log.d(TAG, (new Gson()).toJson(frameData));
 				for (int i = 0; i < packets.size(); ++i) {
 					if(useTCP && mTCPClientServiceConnection != null && mTCPClientServiceConnection.isRunning()) {
 						mTCPClientServiceConnection.sendData(packets.get(i));

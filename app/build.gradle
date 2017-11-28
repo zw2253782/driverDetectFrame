@@ -42,4 +42,5 @@ dependencies {
     compile 'com.github.felHR85:UsbSerial:4.5'
     compile 'com.android.support:appcompat-v7:22.1.0'
     implementation project(':openCVLibrary320')
+    compile 'org.tensorflow:tensorflow-android:+'
 }
