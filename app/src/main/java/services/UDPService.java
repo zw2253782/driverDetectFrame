@@ -150,7 +150,7 @@ public class UDPService extends Service implements Runnable {
             accumulatedSize += payload.length;
             long now = System.currentTimeMillis();
             if (now - lastTimeStamp > 1000) {
-                Log.d(TAG, "udp bitrate: " + accumulatedSize * 8 * 1000.0 / (now - lastTimeStamp) / 1000000.0 + "mbps");
+                //Log.d(TAG, "udp bitrate: " + accumulatedSize * 8 * 1000.0 / (now - lastTimeStamp) / 1000000.0 + "mbps");
                 lastTimeStamp = now;
                 accumulatedSize = 0;
             }
