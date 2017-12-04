@@ -52,17 +52,11 @@ public class UDPService extends Service implements Runnable {
         return binder_;
     }
 
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        startService();
-        return START_STICKY;
-    }
-
-    WifiManager wifiManager;
     WifiManager.WifiLock lockHigh;
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "UDP Service onStartCommand");
 
-    private void startService() {
-
-        wifiManager = (WifiManager)this.getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager = (WifiManager)this.getSystemService(Context.WIFI_SERVICE);
         lockHigh = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "HIGH_WIFI");
         lockHigh.acquire();
 
@@ -74,9 +68,9 @@ public class UDPService extends Service implements Runnable {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+
+        return START_STICKY;
     }
-
-
 
     public void onDestroy() {
         Log.d(TAG,"udpserver connection is closed");
@@ -103,7 +97,6 @@ public class UDPService extends Service implements Runnable {
                 localSocket.receive(receivePacket);
 
                 String receivedData = new String(buffer, 0, receivePacket.getLength());
-                //Log.d(TAG,receivedData);
                 //get UDPClient ip and port
                 InetAddress remoteIPAddress = receivePacket.getAddress();
                 int remotePort = receivePacket.getPort();

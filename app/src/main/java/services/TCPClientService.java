@@ -1,7 +1,9 @@
 package services;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
@@ -54,8 +56,14 @@ public class TCPClientService extends Service implements Runnable {
         return binder_;
     }
 
+    WifiManager.WifiLock lockHigh;
     public int onStartCommand(Intent intent, int flags, int startId) {
         // wait serverip to be set
+
+        WifiManager wifiManager = (WifiManager)this.getSystemService(Context.WIFI_SERVICE);
+        lockHigh = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "HIGH_WIFI");
+        lockHigh.acquire();
+
         try {
             this.address = InetAddress.getByName(ip);
         } catch (UnknownHostException e) {
@@ -86,6 +94,7 @@ public class TCPClientService extends Service implements Runnable {
         }
         dataInputStream = null;
         dataOutputStream = null;
+        lockHigh.release();
     }
 
 

@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 22
+    compileSdkVersion 26
     buildToolsVersion '26.0.2'
 
     defaultConfig {
         applicationId "selfdriving.streaming"
         minSdkVersion 21   // minimum 21 to support opencv320
-        targetSdkVersion 22
+        targetSdkVersion 26
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -35,12 +35,13 @@ android {
     }
 }
 
+
 dependencies {
-    compile 'com.android.support:support-v4:22.0.0'
+    compile 'com.android.support:support-v4:26.0.0'
     compile 'com.google.code.gson:gson:2.6.2'
     testCompile 'junit:junit:4.12'
     compile 'com.github.felHR85:UsbSerial:4.5'
-    compile 'com.android.support:appcompat-v7:22.1.0'
+    compile 'com.android.support:appcompat-v7:26.1.0'
     implementation project(':openCVLibrary320')
-    compile 'org.tensorflow:tensorflow-android:+'
+    // compile 'org.tensorflow:tensorflow-android:+'
 }
