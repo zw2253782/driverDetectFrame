@@ -13,7 +13,7 @@
         >
         <Button
             android:text="Start"
-            android:textColor="#FFFFFF"
+            android:textColor="#555555"
             android:textSize="32sp"
             android:layout_width="match_parent"
             android:layout_height="0px"
@@ -22,7 +22,7 @@
         />
         <Button
             android:text="Menu"
-            android:textColor="#FFFFFF"
+            android:textColor="#555555"
             android:textSize="32sp"
             android:layout_width="match_parent"
             android:layout_height="0px"
