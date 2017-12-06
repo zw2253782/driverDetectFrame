@@ -12,7 +12,7 @@ public class VehicleDynamicTracker {
     private double degree_;
     private Trace gyro_ = null;
     private long timestamp_ = -1;
-    private static double threshold_distance = 10.0; // meter
+    private static double threshold_distance = 2.5; // meter
     private static double threshold_angle = 0.15; // degree
     private static long threshold_time = 10000; //ms
 
@@ -22,8 +22,7 @@ public class VehicleDynamicTracker {
     }
 
     // check if a I frame is required
-    public boolean requireKeyFrame(Trace gps, Trace gyro) {
-        long now = System.currentTimeMillis();
+    public boolean requireKeyFrame(long now, Trace gps, Trace gyro) {
         boolean init = false;
         if (timestamp_ == -1) {
             init = true;

@@ -392,14 +392,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 byte [] header = Arrays.copyOfRange(buffer, 0, RawFrame.requiredSpace);
                 byte [] frame = Arrays.copyOfRange(buffer, RawFrame.requiredSpace, sz);
 
-                if(this.vehicleDynamicTracker.requireKeyFrame(this.gps, this.gyro)) {
-					encoder.forceIFrame();
-				}
-                FrameData frameData = encoder.offerEncoder(frame);
-
                 Gson gson = new Gson();
                 RawFrame rawFrame = gson.fromJson(new String(header), RawFrame.class);
-                rawFrame.dataSize = frameData.compressedDataSize;
+
+				if(this.vehicleDynamicTracker.requireKeyFrame(rawFrame.captureTime, this.gps, this.gyro)) {
+					encoder.forceIFrame();
+				}
+				FrameData frameData = encoder.offerEncoder(frame);
+
+				rawFrame.dataSize = frameData.compressedDataSize;
                 appendToVideoFile(rawFrame, frameData.rawFrameData);
             } catch (Exception e) {
 		        Log.e(TAG, e.getMessage());
@@ -420,7 +421,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	            encoder.setBitrate((int)1e6);
 			}
 			*/
-			if(this.vehicleDynamicTracker.requireKeyFrame(this.gps, this.gyro)) {
+			if(this.vehicleDynamicTracker.requireKeyFrame(System.currentTimeMillis(), this.gps, this.gyro)) {
 				encoder.forceIFrame();
 			}
 
