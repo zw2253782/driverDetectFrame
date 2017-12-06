@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,7 +18,6 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
-import android.media.Image;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
@@ -53,7 +51,6 @@ import utility.Trace;
 
 
 import static java.lang.Math.abs;
-
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 
@@ -100,7 +97,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 	//////
 	private boolean useTCP = false;
+	private long startTime = 0;
 
+	private VehicleDynamicTracker vehicleDynamicTracker = null;
     static {
         System.loadLibrary("MyOpencvLibs");
     }
@@ -111,14 +110,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		this.setContentView(R.layout.activity_main);
 
-        NativeClassAPI.getAcceleration();
 		if (Build.MODEL.equals("Nexus 5X")){
 			//Nexus 5X's screen is reversed, ridiculous! the image sensor does not fit in correct orientation
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
 		} else {
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 		}
-
 
 		this.findViewById(R.id.btntest).setOnClickListener(
 				new View.OnClickListener() {
@@ -175,14 +172,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("udp"));
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("control"));
 
-		long time = System.currentTimeMillis();
+		startTime= System.currentTimeMillis();
 		dbHelper_ = new DatabaseHelper();
-		dbHelper_.createDatabase(time);
+		dbHelper_.createDatabase(startTime);
 
         NativeClassAPI.initFEC();
 
 		try {
-			File outFile = new File(Constants.kVideoFolder.concat(String.valueOf(time)).concat(".raw"));
+			File outFile = new File(Constants.kVideoFolder.concat(String.valueOf(startTime)).concat(".raw"));
 			this.fOut_ = new FileOutputStream(outFile, true);
 
             File inFile = new File(Constants.kVideoFolder.concat("1511124841992.raw"));
@@ -300,11 +297,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		}
 	}
 
-
 	private void startStream() {
 
+		vehicleDynamicTracker = new VehicleDynamicTracker();
 		loadPreferences();
-
 		stopCamera();
 		startCamera();
 
@@ -326,6 +322,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	}
 
 	private void stopStream() {
+
 		this.isStreaming = false;
 
 		if (this.encoder != null)
@@ -394,7 +391,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 this.fIn_.read(buffer, 0, sz);
                 byte [] header = Arrays.copyOfRange(buffer, 0, RawFrame.requiredSpace);
                 byte [] frame = Arrays.copyOfRange(buffer, RawFrame.requiredSpace, sz);
+
+                if(this.vehicleDynamicTracker.requireKeyFrame(this.gps, this.gyro)) {
+					encoder.forceIFrame();
+				}
                 FrameData frameData = encoder.offerEncoder(frame);
+
                 Gson gson = new Gson();
                 RawFrame rawFrame = gson.fromJson(new String(header), RawFrame.class);
                 rawFrame.dataSize = frameData.compressedDataSize;
@@ -411,16 +413,19 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
         if (isStreaming && loadFromRawFrames == false) {
 			double bandwidth = dbHelper_.getBandwidth(1000);
-			Log.d(TAG, "bandwidth:" + String.valueOf(bandwidth));
+			//Log.d(TAG, "bandwidth:" + String.valueOf(bandwidth));
 			/*
 			if (FrameData.sequenceIndex%10 == 0) {
 				encoder.forceIFrame();
 	            encoder.setBitrate((int)1e6);
 			}
 			*/
-			// long time = System.currentTimeMillis();
+			if(this.vehicleDynamicTracker.requireKeyFrame(this.gps, this.gyro)) {
+				encoder.forceIFrame();
+			}
 
-            FrameData frameData = encoder.offerEncoder(data);
+
+			FrameData frameData = encoder.offerEncoder(data);
             if (frameData.compressedDataSize == 0) {
             	// do nothing
 			} else if (storeRawFrames) {
@@ -515,9 +520,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		}
 	}
 
-
 	private Trace gyro = null;
 	private Trace gps = null;
+
+	double rtt = 0.0;
+	int count = 0;
 	private BroadcastReceiver mMessageReceiver = new BroadcastReceiver(){
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -543,6 +550,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				Gson gson = new Gson();
 				FrameData frameData = gson.fromJson(message, FrameData.class);
 
+				count ++;
+
+				if (count > 20) {
+					rtt += frameData.roundLatency;
+
+					Log.d(TAG, String.valueOf(rtt / (double) (count - 20)) + " " + String.valueOf(frameData.roundLatency));
+				}
 				if (dbHelper_.isOpen()) {
 					dbHelper_.updateFrameData(frameData);
 				}
@@ -563,7 +577,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		}
 
 	};
-
 
 	/**
 	 * push data to sender
@@ -591,7 +604,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 }
                 //we can start 2 thread, one is with timeStamp header send to one server and get timeStamp back
                 // the other thread will send without header and directly show the video.
-				double lossRate = 0.0;
+				double lossRate = 0.1;
 				if (dbHelper_.isOpen()) {
 					lossRate = dbHelper_.getLossRate(1000);
 				}
@@ -599,7 +612,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				if (dbHelper_.isOpen()) {
 					dbHelper_.insertFrameData(frameData);
 				}
-				Log.d(TAG, (new Gson()).toJson(frameData));
+				//Log.d(TAG, (new Gson()).toJson(frameData));
 				for (int i = 0; i < packets.size(); ++i) {
 					if(useTCP && mTCPClientServiceConnection != null && mTCPClientServiceConnection.isRunning()) {
 						mTCPClientServiceConnection.sendData(packets.get(i));
