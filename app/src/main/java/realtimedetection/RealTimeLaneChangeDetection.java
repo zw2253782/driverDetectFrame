@@ -6,10 +6,11 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import omnicameras.wings.omnicameras.utility.Event;
-import omnicameras.wings.omnicameras.utility.Formulas;
-import omnicameras.wings.omnicameras.utility.PreProcess;
-import omnicameras.wings.omnicameras.utility.Trace;
+
+import utility.Event;
+import utility.Formulas;
+import utility.PreProcess;
+import utility.TraceSensor;
 
 
 public class RealTimeLaneChangeDetection {
@@ -19,54 +20,54 @@ public class RealTimeLaneChangeDetection {
     private static double kTurnThreshold = 0.6;
     private static double kThreshold = 1;
     private static int kWindowSize = 15;
-    public List<Trace> orientation = new ArrayList<Trace>();
-    public List<Trace> ori_grade = new ArrayList<Trace>();
+    public List<TraceSensor> orientation = new ArrayList<TraceSensor>();
+    public List<TraceSensor> ori_grade = new ArrayList<TraceSensor>();
     int lc_counter = 0;
     int lc_pos = 0;
     int lc_neg = 0;
     double lc_pmax = 0;
     double lc_nmax = 0;
     public Event lc_event = null;
-    List<Trace> lc_window_orientation = new LinkedList<Trace>();
+    List<TraceSensor> lc_window_orientation = new LinkedList<TraceSensor>();
     public List<Event> lc_events = new ArrayList<Event>();
-    Trace lastgrade = new Trace(2);
+    TraceSensor lastgrade = new TraceSensor(2);
     public boolean lcfound = false;
     
     public RealTimeLaneChangeDetection(){
     	
     }
     
-    public void processTrace(Trace trace){
+    public void processTrace(TraceSensor trace){
 		if(orientation.size() == 0){
 			orientation.add(trace);
 			lastgrade = trace;
 			return;
 		}
-        Trace curori = exponentialMovingAverage(lastgrade, trace, -1, 0.3);
+        TraceSensor curori = exponentialMovingAverage(lastgrade, trace, -1, 0.3);
         lastgrade = curori;
 		orientation.add(curori);
         if(orientation.size() > 4){
-            Trace grade = findDerivative(orientation.get(orientation.size()-5), curori, 0);
+            TraceSensor grade = findDerivative(orientation.get(orientation.size()-5), curori, 0);
             ori_grade.add(grade);
             extractLaneChanges(grade, 0);
         }
     }
     
-	public Trace findDerivative(Trace last, Trace cur, int dim){
-        Trace tmp = new Trace(2);
+	public TraceSensor findDerivative(TraceSensor last, TraceSensor cur, int dim){
+        TraceSensor tmp = new TraceSensor(2);
         tmp.time = last.time;
         tmp.values[0] = (cur.values[dim]-last.values[dim])/(cur.time-last.time)*1000;
         tmp.values[1] = Math.signum(tmp.values[0]);
         return tmp;
     }
 
-    public void extractLaneChanges(Trace cur, int dim) {
+    public void extractLaneChanges(TraceSensor cur, int dim) {
         Log.i(TAG, "lane change detection");
         double value = cur.values[dim];
         if(Math.abs(value) >= kTurnThreshold){
             lc_counter++;
         }
-        Trace past = null;
+        TraceSensor past = null;
         lc_window_orientation.add(cur);
         if(lc_window_orientation.size() > kWindowSize) {
             past = lc_window_orientation.remove(0);
@@ -87,7 +88,7 @@ public class RealTimeLaneChangeDetection {
                 lc_event = new Event();
                 lc_event.start_ = lc_window_orientation.get(0).time;
                 lc_event.start_index_ = ori_grade.size()-kWindowSize;
-                for(Trace tr:lc_window_orientation){
+                for(TraceSensor tr:lc_window_orientation){
                     double vsign = Math.signum(tr.values[dim]);
                     if(vsign > 0){
                         if(tr.values[dim] > lc_pmax){
@@ -122,7 +123,7 @@ public class RealTimeLaneChangeDetection {
                 if((lc_event.end_ - lc_event.start_) > kMinimumDuration){
                     double npct = (double)lc_neg/(lc_event.end_index_ - lc_event.start_index_);
                     double ppct = (double)lc_pos/(lc_event.end_index_ - lc_event.start_index_);
-                    Trace avg = PreProcess.getAverage(ori_grade.subList(lc_event.start_index_, lc_event.end_index_));
+                    TraceSensor avg = PreProcess.getAverage(ori_grade.subList(lc_event.start_index_, lc_event.end_index_));
                     //Log.log(lc_event.start_  + " <---> " + lc_event.end_, Formulas.secondToMinute(lc_event.start_/1000) + " <---> " + Formulas.secondToMinute(lc_event.end_/1000)  + " avg: " + avg.values[0] + " npct: " + npct + " ppct: " + ppct + " pmax: " + lc_pmax + " nmax: " + lc_nmax);
                     //if((Math.abs(npct-ppct) <= 0.5)){
 
@@ -153,9 +154,9 @@ public class RealTimeLaneChangeDetection {
     }
 
 
-    public static Trace exponentialMovingAverage(Trace last, Trace cur, int index, double alpha) {
+    public static TraceSensor exponentialMovingAverage(TraceSensor last, TraceSensor cur, int index, double alpha) {
         int d = last.dim;
-        Trace trace = new Trace(d);
+        TraceSensor trace = new TraceSensor(d);
         trace.copyTrace(cur);
         if(index >= 0) {
             trace.values[index] = alpha * cur.values[index] + (1.0 - alpha) * last.values[index];
@@ -172,9 +173,9 @@ public class RealTimeLaneChangeDetection {
         int minpos = -1;
         double min = Double.POSITIVE_INFINITY;
         double max = Double.NEGATIVE_INFINITY;
-        List<Trace> data = orientation.subList(event.start_index_ + 4, event.end_index_ + 4);
+        List<TraceSensor> data = orientation.subList(event.start_index_ + 4, event.end_index_ + 4);
         for(int i=0; i<data.size(); i++){
-            Trace cur = data.get(i);
+            TraceSensor cur = data.get(i);
             if(cur.values[dim] < min){
                 min = cur.values[dim];
                 maxpos = i;

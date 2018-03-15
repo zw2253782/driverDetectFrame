@@ -9,7 +9,7 @@ import java.util.List;
 
 public class Formulas {
 
-	public static double vectorLength(Trace trace) {
+	public static double vectorLength(TraceSensor trace) {
 		return vectorLength(trace, trace.dim);
 	}
 	/**
@@ -20,7 +20,7 @@ public class Formulas {
 	 * @return
 	 */
 
-	public static double vectorLength(Trace trace, int dim) {
+	public static double vectorLength(TraceSensor trace, int dim) {
 		double sum = 0.0;
 		for(int i = 0; i < dim; ++i) {
 			sum += Math.pow(trace.values[i], 2);
@@ -29,7 +29,7 @@ public class Formulas {
 		return res;
 	}
 	
-	public static double[] vectorSum(Trace trace1, Trace trace2)
+	public static double[] vectorSum(TraceSensor trace1, TraceSensor trace2)
 	{
 		if(trace1.dim != trace2.dim)
 		{
@@ -81,7 +81,7 @@ public class Formulas {
 	 * @param traces
 	 * @return [deviation]
 	 */
-	public static double[] absoluteDeviation(List<Trace> traces) {
+	public static double[] absoluteDeviation(List<TraceSensor> traces) {
 		int sz = traces.size();
 		int d = traces.get(sz - 1).dim;
 		
@@ -91,7 +91,7 @@ public class Formulas {
 			average[j] = 0.0;
 			deviation[j] = 0.0;
 		}
-		for(Trace trace: traces) {
+		for(TraceSensor trace: traces) {
 			for(int j = 0; j < d; ++j) {
 				average[j] += trace.values[j];
 			}
@@ -99,7 +99,7 @@ public class Formulas {
 		for(int j = 0; j < d; ++j) {
 			average[j] /= sz;
 		}
-		for(Trace trace: traces) {
+		for(TraceSensor trace: traces) {
 			for(int j = 0; j < d; ++j) {
 				deviation[j] += Math.abs(average[j] - trace.values[j]);
 			}
@@ -118,7 +118,7 @@ public class Formulas {
 	 * For a given trace (preferably the raw accelerometer data, but apply to all)
 	 * return the standard deviation of the traces
 	 * */
-	public static double[] standardDeviation(List<Trace> traces) {
+	public static double[] standardDeviation(List<TraceSensor> traces) {
 		int sz = traces.size();
 		int d = traces.get(sz - 1).dim;
 		
@@ -128,7 +128,7 @@ public class Formulas {
 			average[j] = 0.0;
 			res[j] = 0.0;
 		}
-		for(Trace trace: traces) {
+		for(TraceSensor trace: traces) {
 			for(int j = 0; j < d; ++j) {
 				average[j] += trace.values[j];
 			}
@@ -136,7 +136,7 @@ public class Formulas {
 		for(int j = 0; j < d; ++j) {
 			average[j] /= sz;
 		}
-		for(Trace trace: traces) {
+		for(TraceSensor trace: traces) {
 			for(int j = 0; j < d; ++j) {
 				res[j] += Math.pow((average[j] - trace.values[j]), 2.0);
 			}
@@ -174,55 +174,17 @@ public class Formulas {
 		return corr;
 	}
 	
-	
 
-	/**
-	 * Given a list of unit vectors, calculate the standard deviation
-	 * @param unitVectors the list of unit vectors
-	 * @return 2d array that stores the standard deviation value
-	 */
-	/*
-	public static double[] standardDeviationUnitVector(List<PairDouble> unitVectors) {
-		int sz = unitVectors.size();
-		double[] average = new double[2];
-		double[] res = new double [2];
-		for (int i = 0; i < 2; i++)
-		{
-			average[i] = 0;
-			res[i] = 0;
-		}
-		for (int i = 0; i < sz; i++)
-		{
-			average[0] += unitVectors.get(i).x;
-			average[1] += unitVectors.get(i).y;
-		}
-		average[0] /= sz;
-		average[1] /= sz;
-		for (PairDouble vector : unitVectors)
-		{
-			res[0] += Math.pow(vector.x - average[0], 2.0);
-			res[1] += Math.pow(vector.y - average[1], 2.0);
-		}
-		res[0] = Math.sqrt(res[0]/sz);
-		res[1] = Math.sqrt(res[1]/sz);
-		return res;
-	}*/
-	
-	/*
-	 * For a given trace (preferably the raw accelerometer data, but apply to all)
-	 * return the standard deviation of the traces
-	 * */
-	
-	public static double standardDeviationDegree(List<Trace> traces) {
+	public static double standardDeviationDegree(List<TraceSensor> traces) {
 		int sz = traces.size();
 		double sum = 0.0;
-		for (Trace t : traces)
+		for (TraceSensor t : traces)
 		{
 			sum += t.degree;
 		}
 		double average = sum / sz;
 		double res = 0.0;
-		for (Trace t : traces)
+		for (TraceSensor t : traces)
 		{
 			res += Math.pow(t.degree - average, 2.0);
 		}
@@ -247,7 +209,7 @@ public class Formulas {
 	
 	/**
 	 * convert milliseconds to date and hours
-	 * @param base
+	 * //@param base
 	 * @param time
 	 * @return
 	 */
@@ -261,7 +223,7 @@ public class Formulas {
 	
 	/**
 	 * convert milliseconds to date and hours
-	 * @param base
+	 * //@param base
 	 * @param time
 	 * @return
 	 */
@@ -286,7 +248,7 @@ public class Formulas {
 	
 	/**
 	 * convert milliseconds to date and hours
-	 * @param base
+	 * //@param base
 	 * @param time
 	 * @return
 	 */
@@ -304,7 +266,7 @@ public class Formulas {
 	
 	/**
 	 * convert milliseconds to date and hours
-	 * @param base
+	 * //@param base
 	 * @param time
 	 * @return
 	 */
@@ -342,7 +304,7 @@ public class Formulas {
 		return number;
 	}
 	
-	 public static double[] listTraceToDoubleArray(List<Trace> data, int dim){
+	 public static double[] listTraceToDoubleArray(List<TraceSensor> data, int dim){
 		    double[] result = new double[data.size()];
 		   	for(int i=0; i<=data.size()-1; i++){
 		  		result[i] = data.get(i).values[dim];
@@ -350,11 +312,11 @@ public class Formulas {
 		   	return result;
 		 }
 	 
-		public static int getMin(List<Trace> data, int dim){
+		public static int getMin(List<TraceSensor> data, int dim){
 			int pos = -1;
 			double min = Double.POSITIVE_INFINITY;
 			for(int i=0; i<data.size(); i++){
-				Trace cur = data.get(i);
+				TraceSensor cur = data.get(i);
 				if(cur.values[dim] < min){
 					min = cur.values[dim];
 					pos = i;
@@ -363,11 +325,11 @@ public class Formulas {
 			return pos;
 		}
 		
-		public static int getMax(List<Trace> data, int dim){
+		public static int getMax(List<TraceSensor> data, int dim){
 			int pos = -1;
 			double max = Double.NEGATIVE_INFINITY;
 			for(int i=0; i<data.size(); i++){
-				Trace cur = data.get(i);
+				TraceSensor cur = data.get(i);
 				if(cur.values[dim] > max){
 					max = cur.values[dim];
 					pos = i;
@@ -376,13 +338,13 @@ public class Formulas {
 			return pos;
 		}
 		
-		public static Trace turnAngle(List<Trace> gyroscope) {
+		public static TraceSensor turnAngle(List<TraceSensor> gyroscope) {
 			int sz = gyroscope.size();
 			double[] rads = new double[gyroscope.get(0).dim];
 			Arrays.fill(rads, 0.0);
-			Trace tr = new Trace(gyroscope.get(0).dim);
+			TraceSensor tr = new TraceSensor(gyroscope.get(0).dim);
 			for(int i = 0; i < sz - 1; ++i) {
-				Trace trace = gyroscope.get(i);
+				TraceSensor trace = gyroscope.get(i);
 				long time_diff = gyroscope.get(i + 1).time - gyroscope.get(i).time;
 				for(int j=0; j<trace.dim; j++){
 					double x = trace.values[j];
@@ -396,11 +358,11 @@ public class Formulas {
 			return tr;
 		}
 		
-		public static double turnAngle(List<Trace> gyroscope, int dim) {
+		public static double turnAngle(List<TraceSensor> gyroscope, int dim) {
 			int sz = gyroscope.size();
 			double rads = 0;
 			for(int i = 0; i < sz - 1; ++i) {
-				Trace trace = gyroscope.get(i);
+				TraceSensor trace = gyroscope.get(i);
 				long time_diff = gyroscope.get(i + 1).time - gyroscope.get(i).time;
 				double x = trace.values[dim];
 				rads += x * (time_diff/1000.0);
@@ -415,13 +377,13 @@ public class Formulas {
 		 * @param type
 		 * @return
 		 */
-		public static List<Trace> calcSlope(List<Trace> data, int type){
-			List<Trace> slopes = new ArrayList<Trace>();
+		public static List<TraceSensor> calcSlope(List<TraceSensor> data, int type){
+			List<TraceSensor> slopes = new ArrayList<TraceSensor>();
 			int dim = data.get(0).dim;
 			for(int i=0; i<data.size()-1; i++){
-				Trace cur = data.get(i);
-				Trace next = data.get(i+1);
-				Trace slope = new Trace(dim);
+				TraceSensor cur = data.get(i);
+				TraceSensor next = data.get(i+1);
+				TraceSensor slope = new TraceSensor(dim);
 				slope.time = cur.time;
 				if(type > 0){
 					for(int j=0; j<dim; j++){

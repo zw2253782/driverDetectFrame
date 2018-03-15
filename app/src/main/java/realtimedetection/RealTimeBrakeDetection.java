@@ -6,19 +6,19 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import omnicameras.wings.omnicameras.utility.Event;
-import omnicameras.wings.omnicameras.utility.Formulas;
-import omnicameras.wings.omnicameras.utility.Trace;
+import utility.Event;
+import utility.Formulas;
+import utility.TraceSensor;
 
 public class RealTimeBrakeDetection {
 	private final String TAG = "Brake Detection";
 
 	public List<Event> brakes = new ArrayList<Event>();
 	double br_initvalue = 0.0;
-	LinkedList<Trace> br_sliding = new LinkedList<Trace>();
+	LinkedList<TraceSensor> br_sliding = new LinkedList<TraceSensor>();
 	public Event br_inter = null;
 	boolean br_in_static = false;
-	List<Trace> gpstraces = new ArrayList<Trace>();
+	List<TraceSensor> gpstraces = new ArrayList<TraceSensor>();
 
 	//stop detection
 	public Event st_inter = null;
@@ -32,13 +32,13 @@ public class RealTimeBrakeDetection {
 		
 	}
 	
-	public void processTrace(Trace gps){
+	public void processTrace(TraceSensor gps){
 		extractBrakeIntervals(gps, 5, 3); // detect brakes, should be called before stop detection ==> gpstraces.add(gps);
 
 		extractStopIntervals(gps, 3); // detect stops
 	}
 	
-	public void extractStopIntervals(Trace gps, int dim) {
+	public void extractStopIntervals(TraceSensor gps, int dim) {
         Log.i(TAG, "stop detection");
 		if(gps.values[dim-1] < 0.1){
 			if(false==st_in_static) {
@@ -69,7 +69,7 @@ public class RealTimeBrakeDetection {
 		}*/
 	}
 
-	public void extractBrakeIntervals(Trace gps, int wnd, int dim) {
+	public void extractBrakeIntervals(TraceSensor gps, int wnd, int dim) {
         Log.i(TAG, "Brake detection");
 		gpstraces.add(gps);
 		br_sliding.add(gps);
@@ -109,10 +109,10 @@ public class RealTimeBrakeDetection {
 */		return;	
 	}
 	
-	public static boolean isNonIncreasing (List<Trace> traces, int dim, double initvalue){
+	public static boolean isNonIncreasing (List<TraceSensor> traces, int dim, double initvalue){
 		int sz = traces.size();
 		/* for debug purpose
-		 * for(Trace tr: traces){
+		 * for(TraceSensor tr: traces){
 			System.out.print(tr.values[dim-1] + ", ");
 		}
 		System.out.println("");*/

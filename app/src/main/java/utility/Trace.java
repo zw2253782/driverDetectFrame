@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.io.StringReader;
 import java.io.StringWriter;
 
-public class Trace implements Serializable {
+public class Trace33 implements Serializable {
 
     public long time;
     public double [] values = null;
