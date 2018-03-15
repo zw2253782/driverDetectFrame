@@ -9,6 +9,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.os.Bundle;
+import android.util.Log;
 
 import utility.FrameData;
 
@@ -111,6 +112,7 @@ public class AvcEncoder
     public FrameData offerEncoder(byte[] input)
     {
         boolean isIframe = false;
+        //Log.d(TAG,input.toString());
         YV12toYUV420PackedSemiPlanar(input, yuv420, width, height);
         try {  
             ByteBuffer[] inputBuffers = mediaCodec.getInputBuffers();  

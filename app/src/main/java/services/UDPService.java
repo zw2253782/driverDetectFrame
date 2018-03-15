@@ -91,7 +91,7 @@ public class UDPService extends Service implements Runnable {
         UDPThreadRunning = true;
         while (UDPThreadRunning.booleanValue()) {
             DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
-            // Log.d(TAG, "received data");
+             Log.d(TAG, "received data");
 
             try {
                 localSocket.receive(receivePacket);
@@ -131,6 +131,7 @@ public class UDPService extends Service implements Runnable {
     public void send(FramePacket framePacket, InetAddress remoteIPAddress, int remotePort) {
         try {
             byte[] payload = framePacket.toBytePacket();
+            Log.d(TAG,"send data to server");
 
             if (framePacket.index != lastIndex) {
                 lastIndex = framePacket.index;

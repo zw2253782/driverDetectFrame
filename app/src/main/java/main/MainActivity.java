@@ -68,16 +68,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	Camera camera;
 	SurfaceHolder previewHolder;
 	byte[] previewBuffer;
+	//these boolean value should be false when streaming
 	boolean isStreaming = false;
-
 	boolean storeRawFrames = false;
 	boolean loadFromRawFrames = false;
-
 
 	AvcEncoder encoder;
     boolean consistentControl = false;
 
-	private String ip = "192.168.10.101";
+	private String ip = "192.168.0.106";
 	public InetAddress address;
 	public final int port = 55555;
 
@@ -412,31 +411,35 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 }
             }
         }
-        if (isStreaming && loadFromRawFrames == false) {
-			double bandwidth = dbHelper_.getBandwidth(1000);
-			//Log.d(TAG, "bandwidth:" + String.valueOf(bandwidth));
+        if (isStreaming==true && loadFromRawFrames == false) {
+//			double bandwidth = dbHelper_.getBandwidth(1000);
+			Log.d(TAG, "bandwidth:");
 			/*
 			if (FrameData.sequenceIndex%10 == 0) {
 				encoder.forceIFrame();
 	            encoder.setBitrate((int)1e6);
 			}
 			*/
-			if(this.vehicleDynamicTracker.requireKeyFrame(System.currentTimeMillis(), this.gps, this.gyro)) {
-				encoder.forceIFrame();
-			}
-
+//			if(this.vehicleDynamicTracker.requireKeyFrame(System.currentTimeMillis(), this.gps, this.gyro)) {
+//				encoder.forceIFrame();
+//			}
 
 			FrameData frameData = encoder.offerEncoder(data);
             if (frameData.compressedDataSize == 0) {
             	// do nothing
+				Log.d(TAG,"compressedDataSize is 0");
 			} else if (storeRawFrames) {
                 RawFrame rawFrame = new RawFrame(frameData, this.gyro, this.gps);
                 appendToVideoFile(rawFrame, data);
-            } else {
+				Log.d(TAG,"storeRawFrames");
+
+			} else {
                 // appendToVideoFile(frameData, data);
                 synchronized (encDataList) {
                     encDataList.add(frameData);
-                }
+					Log.d(TAG,"encDataList.add(frameData)");
+
+				}
             }
 		}
 	}
