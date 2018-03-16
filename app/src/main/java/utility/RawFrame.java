@@ -8,11 +8,11 @@ public class RawFrame {
     private static String TAG = FrameData.class.getSimpleName();
     public long captureTime;
     public long dataSize = 0;
-    public Trace gyro = new Trace(3, Trace.GYROSCOPE);
-    public Trace gps = new Trace(3, Trace.GPS);
+    public OriginalTrace gyro = new OriginalTrace(3, OriginalTrace.GYROSCOPE);
+    public OriginalTrace gps = new OriginalTrace(3, OriginalTrace.GPS);
 
     public static final int requiredSpace = 500; // should be larger than the gson format itself
-    public RawFrame(FrameData frameData, Trace gyro, Trace gps) {
+    public RawFrame(FrameData frameData, OriginalTrace gyro, OriginalTrace gps) {
         this.captureTime = frameData.getFrameSendTime();
         this.dataSize = frameData.getDataSize();
         if (gyro != null) {

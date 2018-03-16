@@ -72,6 +72,23 @@
             android:name="services.TCPClientService"
             android:enabled="true"
             android:exported="true"></service>
+        <service
+            android:name="services.GPSService"
+            android:enabled="true"
+            android:exported="true" >
+        </service>
+
+        <service
+            android:name="services.ActionDetectionService"
+            android:enabled="true"
+            android:exported="true" >
+        </service>
+
+        <service
+            android:name="services.PhoneSensorService"
+            android:enabled="true"
+            android:exported="true" >
+        </service>
     </application>
 
 </manifest>

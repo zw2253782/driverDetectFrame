@@ -9,7 +9,7 @@ import android.util.Log;
 
 import utility.Constants;
 import utility.FrameData;
-import utility.Trace;
+import utility.OriginalTrace;
 
 
 public class DatabaseHelper {
@@ -175,7 +175,7 @@ public class DatabaseHelper {
         return res;
     }
 
-    public void insertSensorData(Trace trace) {
+    public void insertSensorData(OriginalTrace trace) {
         String type = trace.type;
         ContentValues values = new ContentValues();
         values.put(KEY_TIME, trace.time);
@@ -183,15 +183,15 @@ public class DatabaseHelper {
             values.put(KEY_VALUES[i], trace.values[i]);
         }
 
-        if (type.equals(Trace.ROTATION_MATRIX)) {
+        if (type.equals(OriginalTrace.ROTATION_MATRIX)) {
             db_.insert(TABLE_ROTATION_MATRIX, null, values);
-        } else if (type.equals(Trace.ACCELEROMETER)) {
+        } else if (type.equals(OriginalTrace.ACCELEROMETER)) {
             db_.insert(TABLE_ACCELEROMETER, null, values);
-        } else if (type.equals(Trace.GYROSCOPE)) {
+        } else if (type.equals(OriginalTrace.GYROSCOPE)) {
             db_.insert(TABLE_GYROSCOPE, null, values);
-        } else if (type.equals(Trace.MAGNETOMETER)) {
+        } else if (type.equals(OriginalTrace.MAGNETOMETER)) {
             db_.insert(TABLE_MAGNETOMETER, null, values);
-        } else if (type.equals(Trace.GPS)) {
+        } else if (type.equals(OriginalTrace.GPS)) {
             db_.insert(TABLE_GPS, null, values);
         }  else {
             assert 0 == 1;

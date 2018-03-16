@@ -11,6 +11,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.channels.FileChannel;
+import java.security.acl.LastOwnerException;
+
+import utility.Constants;
 
 /**
  * Created by wei on 3/15/18.
@@ -71,11 +74,14 @@ public class DatabaseHelperSensor extends SQLiteOpenHelper {
     public DatabaseHelperSensor(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
         super(context, name, factory, version);
         starttime = Long.parseLong(name.substring(0,name.length()-3));
-    }
 
+    }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        //db = SQLiteDatabase.openOrCreateDatabase(Constants.sensorDBFolder + String.valueOf(starttime).concat(".db"), null, null);
+        Log.d(TAG,"creat database");
+
         db.execSQL(CREATE_TABLE_ACCELEROMETER);
         db.execSQL(CREATE_TABLE_GYROSCOPE);
         db.execSQL(CREATE_TABLE_MAGNETIC);
@@ -164,22 +170,23 @@ public class DatabaseHelperSensor extends SQLiteOpenHelper {
     }
 
     //exporting database to sd card
-    public static boolean exportDB(String path, String dbname) {
+    public static void exportDB(File dir2, String path, String dbname) {
 
         try {
 
             File sd = Environment.getExternalStorageDirectory();
             File data = Environment.getDataDirectory();
-            File dir = new File(path);
-            if (!dir.exists()){
-                if (!dir.mkdir()){
+            File dir = null;
+            if (!dir2.exists()){
+                File dir1 = new File(path);
+                if (!dir1.exists()) {
+                    dir1.mkdir();
+                    dir = dir1;
                     // directory creation failed
-                    return false;
                 }
             }
             if (sd.canWrite()) {
-                String  currentDBPath= "//data//" + "omnicameras.wings.omnicameras"
-                        + "//databases//" + dbname;
+                String  currentDBPath= path + dbname;
 
                 File currentDB = new File(data, currentDBPath);
                 File backupDB = new File(dir, dbname);
@@ -189,15 +196,15 @@ public class DatabaseHelperSensor extends SQLiteOpenHelper {
                 dst.transferFrom(src, 0, src.size());
                 src.close();
                 dst.close();
-                return true;
+                Log.d(TAG,"Database Export successful to /sdcard");
             }
         } catch (Exception e) {
             Log.e("DbHelper", "Error in exporting database : " + e.getMessage());
         }
-        return false;
     }
 
     public Long getStarttime(){
         return starttime;
     }
+
 }

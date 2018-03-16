@@ -9,14 +9,14 @@ import java.io.Serializable;
 import java.io.StringReader;
 import java.io.StringWriter;
 
-public class Trace33 implements Serializable {
+public class OriginalTrace implements Serializable {
 
     public long time;
     public double [] values = null;
     public int dim;
     public String type = "none";
 
-    private static String TAG = Trace.class.getSimpleName();
+    private static String TAG = OriginalTrace.class.getSimpleName();
 
     public static String ACCELEROMETER = "accelerometer";
     public static String GYROSCOPE = "gyroscope";
@@ -26,11 +26,11 @@ public class Trace33 implements Serializable {
     public static String GPS = "gps";
 
 
-    public Trace() {
+    public OriginalTrace() {
 
     }
 
-    public Trace(int d, String type) {
+    public OriginalTrace(int d, String type) {
         time = 0;
         dim = d;
         values = new double [dim];
@@ -45,7 +45,7 @@ public class Trace33 implements Serializable {
     }
 
 
-    public void copyTrace(Trace trace) {
+    public void copyTrace(OriginalTrace trace) {
         this.time = trace.time;
         this.dim = trace.dim;
         this.values = new double[dim];

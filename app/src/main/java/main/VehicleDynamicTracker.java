@@ -1,6 +1,6 @@
 package main;
 
-import utility.Trace;
+import utility.OriginalTrace;
 
 /**
  * Created by lkang on 12/4/17.
@@ -8,9 +8,9 @@ import utility.Trace;
 
 public class VehicleDynamicTracker {
     private double distance_;
-    private Trace gps_;
+    private OriginalTrace gps_;
     private double degree_;
-    private Trace gyro_ = null;
+    private OriginalTrace gyro_ = null;
     private long timestamp_ = -1;
     private static double threshold_distance = 2.5; // meter
     private static double threshold_angle = 0.15; // degree
@@ -22,7 +22,7 @@ public class VehicleDynamicTracker {
     }
 
     // check if a I frame is required
-    public boolean requireKeyFrame(long now, Trace gps, Trace gyro) {
+    public boolean requireKeyFrame(long now, OriginalTrace gps, OriginalTrace gyro) {
         boolean init = false;
         if (timestamp_ == -1) {
             init = true;
@@ -44,7 +44,7 @@ public class VehicleDynamicTracker {
         }
     }
 
-    private double getAngle(Trace gyro) {
+    private double getAngle(OriginalTrace gyro) {
         double sum = 0.0;
         for (int i = 0; i < gyro.values.length; ++i) {
             sum += Math.pow(gyro.values[i], 2.0);

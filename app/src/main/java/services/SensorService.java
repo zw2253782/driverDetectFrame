@@ -19,7 +19,9 @@ import android.util.Log;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import utility.Constants;
-import utility.Trace;
+import utility.OriginalTrace;
+
+import static utility.OriginalTrace.*;
 
 public class SensorService extends Service implements SensorEventListener, LocationListener {
 
@@ -57,7 +59,7 @@ public class SensorService extends Service implements SensorEventListener, Locat
         //Log.d(TAG, "location update throttle:" + String.valueOf(location.getSpeed()));
         // TODO Auto-generated method stub
         if(location != null){
-            Trace trace = new Trace(3, Trace.GPS);
+            OriginalTrace trace = new OriginalTrace(3, GPS);
             trace.time = System.currentTimeMillis();
             trace.values[0] = location.getLatitude();
             trace.values[1] = location.getLongitude();
@@ -103,7 +105,7 @@ public class SensorService extends Service implements SensorEventListener, Locat
             System.arraycopy(event.values, 0, mLastMagnetometer, 0, event.values.length);
             mLastMagnetometerSet = true;
 
-            Trace trace = new Trace(3, Trace.MAGNETOMETER);
+            OriginalTrace trace = new OriginalTrace(3, MAGNETOMETER);
             trace.time = time;
             //System.arraycopy(event.values, 0, trace.values, 0, event.values.length);
             for(int i = 0; i < 3; ++i) {
@@ -116,7 +118,7 @@ public class SensorService extends Service implements SensorEventListener, Locat
             System.arraycopy(event.values, 0, mLastAccelerometer, 0, event.values.length);
             mLastAccelerometerSet = true;
 
-            Trace trace = new Trace(3, Trace.ACCELEROMETER);
+            OriginalTrace trace = new OriginalTrace(3, ACCELEROMETER);
             trace.time = time;
             //System.arraycopy(event.values, 0, trace.values, 0, event.values.length);
             for(int i = 0; i < 3; ++i) {
@@ -129,7 +131,7 @@ public class SensorService extends Service implements SensorEventListener, Locat
 
             tLastGyroscope = time;
 
-            Trace trace = new Trace(3, Trace.GYROSCOPE);
+            OriginalTrace trace = new OriginalTrace(3, GYROSCOPE);
             trace.time = time;
             //System.arraycopy(event.values, 0, trace.values, 0, event.values.length);
             for(int i = 0; i < 3; ++i) {
@@ -147,7 +149,7 @@ public class SensorService extends Service implements SensorEventListener, Locat
             mLastMagnetometerSet = false;
             mLastAccelerometerSet = false;
 
-            Trace trace = new Trace(9, Trace.ROTATION_MATRIX);
+            OriginalTrace trace = new OriginalTrace(9, ROTATION_MATRIX);
             trace.time = time;
             //System.arraycopy(mR, 0, trace.values, 0, mR.length);
 
@@ -206,10 +208,10 @@ public class SensorService extends Service implements SensorEventListener, Locat
         isRunning_.set(true);
     }
 
-    private void sendTrace(Trace trace) {
+    private void sendTrace(OriginalTrace trace) {
         //Log.d(TAG, trace.toJson());
-        Intent intent = new Intent("sensor");
-        intent.putExtra("trace", trace.toJson());
+        Intent intent = new Intent("OriginalSensor");
+        intent.putExtra("OriginalTrace", trace.toJson());
 
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }

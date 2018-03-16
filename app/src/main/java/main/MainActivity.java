@@ -9,7 +9,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-
+import android.support.v4.app.ActivityCompat;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -29,12 +29,20 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.Toast;
 
 import api.NativeClassAPI;
+import database.DatabaseHelperSensor;
 import selfdriving.streaming.R;
 import com.google.gson.Gson;
 
 import database.DatabaseHelper;
+import services.ActionDetectionService;
+import services.ActionDetectionServiceConnection;
+import services.GPSService;
+import services.GPSServiceConnection;
+import services.PhoneSensorConnection;
+import services.PhoneSensorService;
 import services.SerialPortConnection;
 import services.SerialPortService;
 import services.TCPClientService;
@@ -46,8 +54,8 @@ import utility.Constants;
 import utility.FrameData;
 import utility.ControlCommand;
 import utility.FramePacket;
+import utility.OriginalTrace;
 import utility.RawFrame;
-import utility.Trace;
 
 
 import static java.lang.Math.abs;
@@ -98,7 +106,21 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	private boolean useTCP = false;
 	private long startTime = 0;
 
-	private VehicleDynamicTracker vehicleDynamicTracker = null;
+	//qbz
+	//sensors & gps
+	private static DatabaseHelperSensor _dbHelperSensor;
+	private static Intent mGPSIntent = null;
+	private static GPSServiceConnection mGPSServiceConnection = null;
+	private static Intent mSensorIntent = null;
+	private static PhoneSensorConnection mSensorServiceConnection = null;
+	private static Intent mDetectionIntent = null;
+	private static ActionDetectionServiceConnection mDetectionServiceConnection = null;
+	private static String dbname;
+	private String mNextVideoAbsolutePath = null;
+
+	//qbz
+
+	//private VehicleDynamicTracker vehicleDynamicTracker = null;
     static {
         System.loadLibrary("MyOpencvLibs");
     }
@@ -133,13 +155,26 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 							((Button) v).setText("Start");
 							stopServices();
 							stopStream();
+
+							//qbz
+								//Log.d(TAG,"Database Export successful to /sdcard");
+								//		Toast.LENGTH_LONG).show();
+
+								//Log.d(TAG,"Database Export unsuccessful");
+								//		Toast.LENGTH_LONG).show();
+							dbname = null;
+							mNextVideoAbsolutePath = null;
+							//
+
 						} else {
+							if (mNextVideoAbsolutePath == null || mNextVideoAbsolutePath.isEmpty()) {
+								mNextVideoAbsolutePath = Constants.sensorDBFolder;
+							}
 							startStream();
 							startServices();
 						}
 					}
 				});
-
 
 		setupFolders();
 
@@ -156,7 +191,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			e.printStackTrace();
 			return;
 		}
-		startSerialService();
+		//startSerialService();
 
 		if(this.useTCP) {
 			startTCPClientService();
@@ -171,18 +206,33 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("udp"));
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("control"));
 
+		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("OriginalSensor"));
+		//LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("udp"));
+		//LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("control"));
+
+
 		startTime= System.currentTimeMillis();
 		dbHelper_ = new DatabaseHelper();
 		dbHelper_.createDatabase(startTime);
 
-        NativeClassAPI.initFEC();
+		//qbz
+		if (dbname == null || dbname.isEmpty()) {
+			dbname = String.valueOf(startTime).concat(".db");
+		}
+		_dbHelperSensor = new DatabaseHelperSensor(this, dbname, null, 1);
+		startGPSService();
+		startSensorService();
+		startDetectionService();
+
+
+		NativeClassAPI.initFEC();
 
 		try {
 			File outFile = new File(Constants.kVideoFolder.concat(String.valueOf(startTime)).concat(".raw"));
 			this.fOut_ = new FileOutputStream(outFile, true);
 
-            File inFile = new File(Constants.kVideoFolder.concat("1511124841992.raw"));
-            this.fIn_ = new FileInputStream(inFile);
+            //File inFile = new File(Constants.kVideoFolder.concat("1511124841992.raw"));
+            //this.fIn_ = new FileInputStream(inFile);
         } catch (Exception e) {
 			Log.e(TAG, e.getMessage());
 		}
@@ -190,11 +240,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		latencyMonitor = new LatencyMonitor();
 	}
 
+	public File dir = null;
 	private void setupFolders () {
 		File dbDir = new File(Constants.kDBFolder);
+		File sensorDBDir = new File(Constants.sensorDBFolder);
 		File videoDir = new File(Constants.kVideoFolder);
-		if (!dbDir.exists()) {
-			dbDir.mkdirs();
+		if (!sensorDBDir.exists()) {
+			sensorDBDir.mkdirs();
+			dir = sensorDBDir;
+		}
+		if(!dbDir.exists()) {
+			dbDir.mkdir();
 		}
 		if(!videoDir.exists()) {
 			videoDir.mkdir();
@@ -212,14 +268,22 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		} else {
 			stopUDPService();
 		}
-		stopSerialService();
+		//stopSerialService();
 		if (mSensor!= null){
 			stopService(mSensor);
 			mSensor = null;
 		}
+		stopSensorService();
+
 		if (dbHelper_!= null) {
 			dbHelper_.closeDatabase();
 		}
+
+		if (_dbHelperSensor!= null) {
+			DatabaseHelperSensor.exportDB(dir,Constants.sensorDBFolder, dbname);
+			_dbHelperSensor.close();
+		}
+
         if (this.fOut_ != null) {
             try {
                 this.fOut_.close();
@@ -298,7 +362,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 	private void startStream() {
 
-		vehicleDynamicTracker = new VehicleDynamicTracker();
+		//vehicleDynamicTracker = new VehicleDynamicTracker();
 		loadPreferences();
 		stopCamera();
 		startCamera();
@@ -394,9 +458,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 Gson gson = new Gson();
                 RawFrame rawFrame = gson.fromJson(new String(header), RawFrame.class);
 
-				if(this.vehicleDynamicTracker.requireKeyFrame(rawFrame.captureTime, this.gps, this.gyro)) {
-					encoder.forceIFrame();
-				}
+				//if(this.vehicleDynamicTracker.requireKeyFrame(rawFrame.captureTime, this.gps, this.gyro)) {
+				//	encoder.forceIFrame();
+				//}
 				FrameData frameData = encoder.offerEncoder(frame);
 
 				rawFrame.dataSize = frameData.compressedDataSize;
@@ -524,8 +588,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		}
 	}
 
-	private Trace gyro = null;
-	private Trace gps = null;
+	private OriginalTrace gyro = null;
+	private OriginalTrace gps = null;
 
 	double rtt = 0.0;
 	int count = 0;
@@ -533,13 +597,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		@Override
 		public void onReceive(Context context, Intent intent) {
 
-			if (intent.getAction().equals("sensor")) {
-				String message = intent.getStringExtra("trace");
-				Trace trace = new Trace();
+			if (intent.getAction().equals("OriginalSensor")) {
+				String message = intent.getStringExtra("OriginalTrace");
+				OriginalTrace trace = new OriginalTrace();
 				trace.fromJson(message);
-				if (trace.type.compareTo(Trace.GYROSCOPE) == 0) {
+				if (trace.type.compareTo(OriginalTrace.GYROSCOPE) == 0) {
 				    gyro = trace;
-                } else if (trace.type.compareTo(Trace.GPS) == 0) {
+                } else if (trace.type.compareTo(OriginalTrace.GPS) == 0) {
 				    gps = trace;
                 } else {
 
@@ -667,17 +731,69 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                         }
                     }
                 }
-				if (mSerialPortConnection != null) {
-					double throttle = (float)0.0;
-					double steering = controlCommand.steering;
-					if(controlCommand.throttle > 0.5) {
-						throttle = (float) ((controlCommand.throttle-0.5) * 0.4 + 1.0);
-					}
-					mSerialPortConnection.sendCommandFunction("throttle(" + String.valueOf(throttle) + ")");
-					mSerialPortConnection.sendCommandFunction("steering(" + String.valueOf(steering) + ")");
-				}
+				//if (mSerialPortConnection != null) {
+					//double throttle = (float)0.0;
+					//double steering = controlCommand.steering;
+				//	if(controlCommand.throttle > 0.5) {
+					//	throttle = (float) ((controlCommand.throttle-0.5) * 0.4 + 1.0);
+				//	}
+					//mSerialPortConnection.sendCommandFunction("throttle(" + String.valueOf(throttle) + ")");
+					//mSerialPortConnection.sendCommandFunction("steering(" + String.valueOf(steering) + ")");
+				//}
 			}
 		}
 	};
 
+
+
+	///qbz
+	public void startGPSService() {
+		mGPSIntent = new Intent(this, GPSService.class);
+		mGPSServiceConnection = new GPSServiceConnection(_dbHelperSensor);
+		Log.d(TAG, "Binding gps service..");
+		this.bindService(mGPSIntent, mGPSServiceConnection, Context.BIND_AUTO_CREATE);
+		this.startService(mGPSIntent);
+	}
+
+	public void startSensorService() {
+		mSensorIntent = new Intent(this, PhoneSensorService.class);
+		mSensorServiceConnection = new PhoneSensorConnection(_dbHelperSensor);
+		Log.d(TAG, "Binding sensor service..");
+		this.bindService(mSensorIntent, mSensorServiceConnection, Context.BIND_AUTO_CREATE);
+		this.startService(mSensorIntent);
+	}
+
+	public void startDetectionService() {
+		mDetectionIntent = new Intent(this, ActionDetectionService.class);
+		mDetectionServiceConnection = new ActionDetectionServiceConnection(_dbHelperSensor);
+		Log.d(TAG, "Binding detection service..");
+		this.bindService(mDetectionIntent, mDetectionServiceConnection, Context.BIND_AUTO_CREATE);
+		this.startService(mDetectionIntent);
+	}
+
+	public void stopSensorService(){
+		if (mGPSServiceConnection != null ) {
+			Log.d(TAG, "stop gps servcie");
+			this.unbindService(mGPSServiceConnection);
+			this.stopService(mGPSIntent);
+			mGPSIntent = null;
+			mGPSServiceConnection = null;
+		}
+		if (mSensorServiceConnection != null ) {
+			Log.d(TAG, "stop sensor servcie");
+			this.unbindService(mSensorServiceConnection);
+			this.stopService(mSensorIntent);
+			mSensorIntent = null;
+			mSensorServiceConnection = null;
+		}
+		if (mDetectionServiceConnection != null ) {
+			Log.d(TAG, "stop detection servcie");
+			this.unbindService(mDetectionServiceConnection);
+			this.stopService(mDetectionIntent);
+			mDetectionIntent = null;
+			mDetectionServiceConnection = null;
+		}
+		_dbHelperSensor = null;
+
+	}
 }
