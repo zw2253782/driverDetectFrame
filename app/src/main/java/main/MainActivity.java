@@ -2,6 +2,7 @@ package main;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -9,6 +10,8 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+
+import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -56,7 +59,7 @@ import utility.ControlCommand;
 import utility.FramePacket;
 import utility.OriginalTrace;
 import utility.RawFrame;
-
+import utility.TraceSensor;
 
 import static java.lang.Math.abs;
 import org.opencv.android.OpenCVLoader;
@@ -117,7 +120,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	private static ActionDetectionServiceConnection mDetectionServiceConnection = null;
 	private static String dbname;
 	private String mNextVideoAbsolutePath = null;
-
+	private static final String STORAGE_DIRECTORY =
+			(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT ?
+					Environment.DIRECTORY_DOCUMENTS : Environment.DIRECTORY_DCIM);
+	private static final String SUB_DIRECTORY = "OmniCameras";
 	//qbz
 
 	//private VehicleDynamicTracker vehicleDynamicTracker = null;
@@ -155,20 +161,20 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 							((Button) v).setText("Start");
 							stopServices();
 							stopStream();
-
 							//qbz
-								//Log.d(TAG,"Database Export successful to /sdcard");
-								//		Toast.LENGTH_LONG).show();
-
-								//Log.d(TAG,"Database Export unsuccessful");
-								//		Toast.LENGTH_LONG).show();
-							dbname = null;
-							mNextVideoAbsolutePath = null;
+							if (mNextVideoAbsolutePath!=null){
+								Log.d(TAG,"mNextVideoAbsolutePath!=null" + DatabaseHelperSensor.exportDB(mNextVideoAbsolutePath, dbname));
+							}
+							//DatabaseHelperSensor.exportDB(mNextVideoAbsolutePath, dbname);
 							//
 
 						} else {
-							if (mNextVideoAbsolutePath == null || mNextVideoAbsolutePath.isEmpty()) {
-								mNextVideoAbsolutePath = Constants.sensorDBFolder;
+							try {
+								if (mNextVideoAbsolutePath == null || mNextVideoAbsolutePath.isEmpty()) {
+									mNextVideoAbsolutePath = createFilePath(MainActivity.this);
+								}
+							} catch (IOException e){
+								throw new RuntimeException("Fail to create directory.");
 							}
 							startStream();
 							startServices();
@@ -243,12 +249,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	public File dir = null;
 	private void setupFolders () {
 		File dbDir = new File(Constants.kDBFolder);
-		File sensorDBDir = new File(Constants.sensorDBFolder);
+		//File sensorDBDir = new File(Constants.sensorDBFolder);
 		File videoDir = new File(Constants.kVideoFolder);
-		if (!sensorDBDir.exists()) {
-			sensorDBDir.mkdirs();
-			dir = sensorDBDir;
-		}
+		//if (!sensorDBDir.exists()) {
+		//	sensorDBDir.mkdirs();
+		//	dir = sensorDBDir;
+		//}
 		if(!dbDir.exists()) {
 			dbDir.mkdir();
 		}
@@ -280,7 +286,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		}
 
 		if (_dbHelperSensor!= null) {
-			DatabaseHelperSensor.exportDB(dir,Constants.sensorDBFolder, dbname);
+			//DatabaseHelperSensor.exportDB(Constants.sensorDBFolder, dbname);
 			_dbHelperSensor.close();
 		}
 
@@ -350,7 +356,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		this.width = resolution.get(0);
 		this.height = resolution.get(1);
 
-		// this.ip = SettingsActivity.getRemoteIP(MainActivity.this);
+		 this.ip = SettingsActivity.getRemoteIP(MainActivity.this);
 		Log.d(TAG, "Resolution:" + this.width + "x" + this.height);
 
 		List<Double> bitRate = SettingsActivity.getBitRate(MainActivity.this);
@@ -498,7 +504,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				Log.d(TAG,"storeRawFrames");
 
 			} else {
-                // appendToVideoFile(frameData, data);
+				RawFrame rawFrame = new RawFrame(frameData, this.gyro, this.gps);
+				appendToVideoFile(rawFrame, data);
                 synchronized (encDataList) {
                     encDataList.add(frameData);
 					Log.d(TAG,"encDataList.add(frameData)");
@@ -796,4 +803,24 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		_dbHelperSensor = null;
 
 	}
+
+	//qbz
+	private String createFilePath(Context context)  throws IOException{
+		String state = Environment.getExternalStorageState();
+		if (!state.equals(Environment.MEDIA_MOUNTED)) {
+			throw new IOException("External storage is not mounted");
+		}
+		Long time = System.currentTimeMillis();
+		File root = new File(Environment.getExternalStorageDirectory(), SUB_DIRECTORY+"/" + String.valueOf(time) + "/");
+		if (!root.exists()) {
+			if (!root.mkdirs()) {
+				throw new FileNotFoundException("Unable to create directory \"" + SUB_DIRECTORY +"/" + String.valueOf(time) + "/" + "\" in \"" + STORAGE_DIRECTORY + "\"");
+			}
+		}
+		System.out.println(Environment.getExternalStorageDirectory() + "/" + SUB_DIRECTORY + "/" + String.valueOf(time) + "/");
+
+		return Environment.getExternalStorageDirectory() +  "/" + SUB_DIRECTORY + "/" + String.valueOf(time) + "/";
+		//return context.getExternalFilesDir(null).getAbsolutePath() + "/" + System.currentTimeMillis() + ".mp4";
+	}
+
 }

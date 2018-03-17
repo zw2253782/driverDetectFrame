@@ -170,23 +170,22 @@ public class DatabaseHelperSensor extends SQLiteOpenHelper {
     }
 
     //exporting database to sd card
-    public static void exportDB(File dir2, String path, String dbname) {
+    public static boolean exportDB(String path, String dbname) {
 
         try {
 
             File sd = Environment.getExternalStorageDirectory();
             File data = Environment.getDataDirectory();
-            File dir = null;
-            if (!dir2.exists()){
-                File dir1 = new File(path);
-                if (!dir1.exists()) {
-                    dir1.mkdir();
-                    dir = dir1;
+            File dir = new File(path);
+            if (!dir.exists()){
+                if (!dir.mkdir()){
                     // directory creation failed
+                    return false;
                 }
             }
             if (sd.canWrite()) {
-                String  currentDBPath= path + dbname;
+                String  currentDBPath= "//data//" + "selfdriving.streaming"
+                        + "//databases//" + dbname;
 
                 File currentDB = new File(data, currentDBPath);
                 File backupDB = new File(dir, dbname);
@@ -196,12 +195,14 @@ public class DatabaseHelperSensor extends SQLiteOpenHelper {
                 dst.transferFrom(src, 0, src.size());
                 src.close();
                 dst.close();
-                Log.d(TAG,"Database Export successful to /sdcard");
+                return true;
             }
         } catch (Exception e) {
             Log.e("DbHelper", "Error in exporting database : " + e.getMessage());
         }
+        return false;
     }
+
 
     public Long getStarttime(){
         return starttime;
