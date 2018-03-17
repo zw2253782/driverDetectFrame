@@ -202,7 +202,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		mSensor = new Intent(this, SensorService.class);
 		startService(mSensor);
 
-		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("sensor"));
+		//LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("sensor"));
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("udp"));
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("control"));
 
@@ -477,7 +477,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
         if (isStreaming==true && loadFromRawFrames == false) {
 //			double bandwidth = dbHelper_.getBandwidth(1000);
-			Log.d(TAG, "bandwidth:");
+			//Log.d(TAG, "bandwidth:");
 			/*
 			if (FrameData.sequenceIndex%10 == 0) {
 				encoder.forceIFrame();

@@ -131,7 +131,7 @@ public class UDPService extends Service implements Runnable {
     public void send(FramePacket framePacket, InetAddress remoteIPAddress, int remotePort) {
         try {
             byte[] payload = framePacket.toBytePacket();
-            Log.d(TAG,"send data to server");
+            //Log.d(TAG,"send data to server");
 
             if (framePacket.index != lastIndex) {
                 lastIndex = framePacket.index;

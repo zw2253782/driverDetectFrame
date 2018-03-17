@@ -146,7 +146,7 @@ public class ActionDetectionService extends Service {
     private BroadcastReceiver mSensorMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            //Log.i(TAG, "broadcast received");
+            Log.i(TAG, "broadcast received");
             TraceSensor data = (TraceSensor) intent.getSerializableExtra("trace");
             if(data.type.equals(TraceSensor.ACCELEROMETER)){
                 if(turnDetector != null) {

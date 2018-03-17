@@ -3,6 +3,7 @@ package services;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.util.Log;
 
 import database.DatabaseHelperSensor;
 
@@ -14,6 +15,7 @@ public class ActionDetectionServiceConnection implements ServiceConnection {
     private  ActionDetectionService.ActionDetectionBinder _service = null;
     private DatabaseHelperSensor _dbHelper = null;
 
+    public final String TAG = "ActionConne";
     public ActionDetectionServiceConnection(DatabaseHelperSensor dbhelper) {
         _dbHelper = dbhelper;
     }
@@ -23,6 +25,8 @@ public class ActionDetectionServiceConnection implements ServiceConnection {
         // TODO Auto-generated method stub
         _service = (ActionDetectionService.ActionDetectionBinder) binder;
         _service.setDatabaseHelper(_dbHelper);
+        Log.d(TAG, "connected");
+
     }
 
     @Override
