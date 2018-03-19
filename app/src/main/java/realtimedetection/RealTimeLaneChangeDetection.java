@@ -62,7 +62,7 @@ public class RealTimeLaneChangeDetection {
     }
 
     public void extractLaneChanges(TraceSensor cur, int dim) {
-        Log.i(TAG, "lane change detection");
+        //Log.i(TAG, "lane change detection");
         double value = cur.values[dim];
         if(Math.abs(value) >= kTurnThreshold){
             lc_counter++;

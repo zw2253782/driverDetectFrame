@@ -44,7 +44,7 @@ public class GPSService extends Service implements LocationListener {
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.d(TAG, "location update speed:" + String.valueOf(location.getSpeed()));
+        //Log.d(TAG, "location update speed:" + String.valueOf(location.getSpeed()));
         // TODO Auto-generated method stub
         if (location != null && _dbHelper != null) {
             time = System.currentTimeMillis();

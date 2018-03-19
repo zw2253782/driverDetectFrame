@@ -105,6 +105,7 @@ public class PhoneSensorService extends Service implements SensorEventListener {
             tmp.values[0] = event.values[0];
             tmp.values[1] = event.values[1];
             tmp.values[2] = event.values[2];
+            Log.i(TAG, String.valueOf(tmp.time));
             sendTrace(tmp);
             _dbHelper.addGyroData(time, event.values[0], event.values[1], event.values[2]);
 

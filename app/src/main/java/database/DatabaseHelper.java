@@ -122,7 +122,9 @@ public class DatabaseHelper {
         values.put(bandwidth, frameData.bandwidth);
         values.put(N, frameData.N);
         values.put(K, frameData.K);
-        db_.insert(TABLE_LATENCY, null, values);
+        if(values!= null){
+            db_.insert(TABLE_LATENCY, null, values);
+        }
     }
 
     public double getBandwidth(long duration) {

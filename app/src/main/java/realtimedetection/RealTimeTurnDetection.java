@@ -47,6 +47,7 @@ public class RealTimeTurnDetection {
 			gyroscope.add(trace);
 		}
 		if(trace.time > 10000){
+			Log.i(TAG, String.valueOf(trace.time));
 			if(initAcce ==null || initMag == null || rotation == null){
 				if(accelerometer.size()>10 && magnetic.size() > 10) {
 					initAcce = PreProcess.getAverage(accelerometer);

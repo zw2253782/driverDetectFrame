@@ -63,14 +63,14 @@
             android:name="services.UDPService"
             android:enabled="true"
             android:exported="true" />
-        <service
+<!--        <service
             android:name="services.SerialPortService"
             android:enabled="true"
             android:exported="true" />
         <service
             android:name="services.SensorService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false" />-->
         <service
             android:name="services.TCPClientService"
             android:enabled="true"

@@ -146,7 +146,7 @@ public class ActionDetectionService extends Service {
     private BroadcastReceiver mSensorMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.i(TAG, "broadcast received");
+            //Log.i(TAG, "broadcast received");
             TraceSensor data = (TraceSensor) intent.getSerializableExtra("trace");
             if(data.type.equals(TraceSensor.ACCELEROMETER)){
                 if(turnDetector != null) {
@@ -182,6 +182,7 @@ public class ActionDetectionService extends Service {
     }
 
     private  void onGyroscopeChanged(TraceSensor gyroscope){
+        Log.i(TAG, String.valueOf(gyroscope.time));
         turnDetector.processTrace(gyroscope);
         if(turnDetector.turnfound){
             Event tn_event = turnDetector.tn_events.get(turnDetector.tn_events.size()-1);

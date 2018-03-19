@@ -3,6 +3,7 @@ package services;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Address;
 import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.IBinder;
@@ -17,6 +18,9 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -30,10 +34,13 @@ import utility.JsonWraper;
 
 public class TCPClientService extends Service implements Runnable {
     private static String TAG = TCPClientService.class.getSimpleName();
+    public GetUSBIP getUSBIP = new GetUSBIP();
 
     private final Binder binder_ = new TCPClientService.TCPClientBinder();
     private InetAddress address = null;
-    private String ip = "192.168.10.101";
+    private String ip = getUSBIP.getUSBThetheredIP();
+    //private String ip = "192.168.0.1";
+
     private int serverPort = 55555;
     private boolean mRun = false;
     private DataOutputStream dataOutputStream;
@@ -41,6 +48,7 @@ public class TCPClientService extends Service implements Runnable {
 
     public class TCPClientBinder extends Binder {
         public TCPClientService getService() {
+            Log.d(TAG,ip);
             return TCPClientService.this;
         }
         public boolean isRunning() {return mRun;}
@@ -163,5 +171,46 @@ public class TCPClientService extends Service implements Runnable {
         Intent intent = new Intent("control");
         intent.putExtra("control", controllerData);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    public class GetUSBIP {
+        private String TAG = "GetUSBIP";
+
+        public String getUSBThetheredIP(){
+
+            BufferedReader bufferedReader=null;
+            String ips="";
+            try{
+                bufferedReader=new BufferedReader(new FileReader("/proc/net/arp"));
+                String line;
+                while((line=bufferedReader.readLine())!=null){
+                    String[]splitted=line.split(" +");
+                    if(splitted!=null&&splitted.length>=4){
+                        String ip=splitted[0];
+                        String mac=splitted[3];
+                        if(mac.matches("..:..:..:..:..:..")){
+                            if(mac.matches("00:00:00:00:00:00")){
+                                //Log.d(TAG,"DEBUG Wrong IP:" + mac + ":" + ip);
+                            }else{
+                                Log.d(TAG, "remote PC MAC is: " + mac + ",remote PC IP address is: " + ip);
+                                ips=ip;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }catch(FileNotFoundException e){
+                e.printStackTrace();
+            }catch(IOException e){
+                e.printStackTrace();
+            }finally{
+                try{
+                    bufferedReader.close();
+                }catch(IOException e){
+                    e.printStackTrace();
+                }
+            }
+            return ips;
+        }
     }
 }

@@ -28,7 +28,7 @@ public class FrameData implements Serializable {
     public byte[] rawFrameData = null;
     public byte[] fecFrameData = null;
     public static long sequenceIndex = 0;
-    public static final int referencePktSize = 2000;
+    public static final int referencePktSize = 4000;
     public FrameData (boolean isIFrame, byte[] data, int originalSize){
         this.frameSendTime = System.currentTimeMillis();
         this.isIFrame = isIFrame;
