@@ -30,8 +30,7 @@
             android:id="@+id/btntest"
             />
     </LinearLayout>
-
-
+    
     <LinearLayout
         android:id="@+id/container"
         android:layout_height="match_parent"
@@ -42,9 +41,9 @@
             android:id="@+id/svCameraPreview"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_centerInParent="true">
-        </SurfaceView>
+            android:layout_centerInParent="true"/>
 
     </LinearLayout>
+
 
 </LinearLayout>

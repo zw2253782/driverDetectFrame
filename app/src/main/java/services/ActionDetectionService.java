@@ -14,7 +14,10 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.view.TextureView;
 import android.widget.Toast;
+
+import com.google.gson.Gson;
 
 import java.util.Date;
 
@@ -27,6 +30,8 @@ import realtimedetection.RealTimeTurnDetection;
 import selfdriving.streaming.R;
 import utility.Event;
 import utility.Formulas;
+import utility.FrameData;
+import utility.OriginalTrace;
 import utility.TraceSensor;
 import utility.PreProcess;
 
@@ -53,7 +58,7 @@ public class ActionDetectionService extends Service {
     RealTimeBrakeDetection brakeDetector = null;
     RealTimeTurnDetection turnDetector = null;
     RealTimeLaneChangeDetection lcDetector = null;
-
+    FrameData frameData = new FrameData();
     @Override
     public IBinder onBind(Intent intent) {
         // TODO Auto-generated method stub
@@ -163,6 +168,7 @@ public class ActionDetectionService extends Service {
             }else if(data.type.equals(TraceSensor.GYROSCOPE)){
                 if(turnDetector != null) {
                     onGyroscopeChanged(data);
+                    Log.d(TAG,"received turn data");
                 }
             }else if(data.type.equals(TraceSensor.GPS)){
                 if(brakeDetector != null) {
@@ -186,6 +192,13 @@ public class ActionDetectionService extends Service {
         turnDetector.processTrace(gyroscope);
         if(turnDetector.turnfound){
             Event tn_event = turnDetector.tn_events.get(turnDetector.tn_events.size()-1);
+            //zw
+            /*frameData.eventType = tn_event.type_;
+            frameData.eventStart = tn_event.start_;
+            frameData.eventEnd = tn_event.end_;*/
+            sendEvent(tn_event);
+
+            //
             utility.Log.log("Turns: " + tn_event.start_/1000 + " <---> " + tn_event.end_/1000, "  " + Formulas.secondToMinute(tn_event.start_/1000) + " <---> " + Formulas.secondToMinute(tn_event.end_/1000));
             long time = System.currentTimeMillis();
             _dbHelper.addEventData(time, tn_event.start_, tn_event.end_, tn_event.type_);
@@ -198,6 +211,13 @@ public class ActionDetectionService extends Service {
         brakeDetector.processTrace(gps);
         if(brakeDetector.brakefound){
             Event br_inter = brakeDetector.brakes.get(brakeDetector.brakes.size()-1);
+            //zw
+           /* frameData.eventType = br_inter.type_;
+            frameData.eventStart = br_inter.start_;
+            frameData.eventEnd = br_inter.end_;*/
+            sendEvent(br_inter);
+
+            //
 //            omnicameras.wings.omnicameras.utility.Log.log("Brake : " + br_inter.start_/1000 + " <---> " + br_inter.end_/1000, "  " + Formulas.secondToMinute(br_inter.start_/1000) + " <---> " + Formulas.secondToMinute(br_inter.end_/1000));
             long time = System.currentTimeMillis();
             _dbHelper.addEventData(time, br_inter.start_, br_inter.end_, br_inter.type_);
@@ -207,6 +227,13 @@ public class ActionDetectionService extends Service {
         if(brakeDetector.stopfound){
             Event st_inter = brakeDetector.stops.get(brakeDetector.stops.size()-1);
   //          omnicameras.wings.omnicameras.utility.Log.log("Stop : " + st_inter.start_/1000 + " <---> " + st_inter.end_/1000, "  " + Formulas.secondToMinute(st_inter.start_/1000) + " <---> " + Formulas.secondToMinute(st_inter.end_/1000));
+            //zw
+           /* frameData.eventType = st_inter.type_;
+            frameData.eventStart = st_inter.start_;
+            frameData.eventEnd = st_inter.end_;*/
+            sendEvent(st_inter);
+
+            //
             long time = System.currentTimeMillis();
             _dbHelper.addEventData(time, st_inter.start_, st_inter.end_, st_inter.type_);
             showForegroundNotification("Stop", Formulas.secondToMinute(st_inter.start_/1000) + " <---> " + Formulas.secondToMinute(st_inter.end_/1000));
@@ -218,12 +245,27 @@ public class ActionDetectionService extends Service {
         lcDetector.processTrace(trace);
         if(lcDetector.lcfound){
             Event lc_event = lcDetector.lc_events.get(lcDetector.lc_events.size()-1);
+            //zw
+           /* frameData.eventType = lc_event.type_;
+            frameData.eventStart = lc_event.start_;
+            frameData.eventEnd = lc_event.end_;*/
+            sendEvent(lc_event);
+            //
             long time = System.currentTimeMillis();
             _dbHelper.addEventData(time, lc_event.start_, lc_event.end_, lc_event.type_);
             showForegroundNotification("Lane Change", Formulas.secondToMinute(lc_event.start_/1000) + " <---> " + Formulas.secondToMinute(lc_event.end_/1000));
             lcDetector.lcfound = false;
            // Log.i(lc_event.start_  + " <---> " + lc_event.end_, Formulas.secondToMinute(lc_event.start_/1000) + " <---> " + Formulas.secondToMinute(lc_event.end_/1000));  //+ " avg: " + avg.values[0] + " npct: " + npct + " ppct: " + ppct + " pmax: " + lc_pmax + " nmax: " + lc_nmax);
         }
+    }
+
+    private void sendEvent(Event event) {
+        //Log.d(TAG, trace.toJson());
+        Gson gson = new Gson();
+        Intent intent = new Intent("EventDetection");
+        intent.putExtra("event", gson.toJson(event));
+
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
 }

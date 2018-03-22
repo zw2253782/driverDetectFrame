@@ -19,9 +19,13 @@ public class FramePacket implements Serializable {
 	public int index = 0; // 0 ... n - 1
 	public byte[] data = null;
 	public String type = "frame_data_from_car";
+	//zw0321
+	public long parketeventStart;
+	public long parketeventEnd;
+	public String parketeventType;
 
-	public static final int requiredSpace = 150; // should be larger than the gson format itself
-	public FramePacket(long sendTime, long frameSequence, int len, int k, int n, int index) {
+	public static final int requiredSpace = 500; // should be larger than the gson format itself
+	public FramePacket(long eventStart, long eventEnd, String eventType, long sendTime, long frameSequence, int len, int k, int n, int index) {
 		this.packetSendTime = sendTime;
 		this.frameSequence = frameSequence;
 		this.packetLength = len;
@@ -29,6 +33,10 @@ public class FramePacket implements Serializable {
 		this.n = n;
 		this.index = index;
 		this.data = new byte[len];
+		//zw
+		this.parketeventStart = eventStart;
+		this.parketeventEnd = eventEnd;
+		this.parketeventType = eventType;
 	}
 
 	public byte[] toBytePacket() {

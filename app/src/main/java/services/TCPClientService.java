@@ -54,6 +54,7 @@ public class TCPClientService extends Service implements Runnable {
         public boolean isRunning() {return mRun;}
         public void sendData(FramePacket framePacket) {
             sendMessage(framePacket);
+            Log.d(TAG,"tcp framepacket: " + framePacket.parketeventType);
         }
     }
 
@@ -174,7 +175,6 @@ public class TCPClientService extends Service implements Runnable {
     }
 
     public class GetUSBIP {
-        private String TAG = "GetUSBIP";
 
         public String getUSBThetheredIP(){
 
@@ -186,14 +186,14 @@ public class TCPClientService extends Service implements Runnable {
                 while((line=bufferedReader.readLine())!=null){
                     String[]splitted=line.split(" +");
                     if(splitted!=null&&splitted.length>=4){
-                        String ip=splitted[0];
+                        String ip1=splitted[0];
                         String mac=splitted[3];
                         if(mac.matches("..:..:..:..:..:..")){
                             if(mac.matches("00:00:00:00:00:00")){
                                 //Log.d(TAG,"DEBUG Wrong IP:" + mac + ":" + ip);
                             }else{
-                                Log.d(TAG, "remote PC MAC is: " + mac + ",remote PC IP address is: " + ip);
-                                ips=ip;
+                                Log.d(TAG, "remote PC MAC is: " + mac + ",remote PC IP address is: " + ip1);
+                                ips=ip1;
                                 break;
                             }
                         }

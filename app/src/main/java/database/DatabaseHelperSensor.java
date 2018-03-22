@@ -14,6 +14,7 @@ import java.nio.channels.FileChannel;
 import java.security.acl.LastOwnerException;
 
 import utility.Constants;
+import utility.FrameData;
 
 /**
  * Created by wei on 3/15/18.
@@ -166,6 +167,13 @@ public class DatabaseHelperSensor extends SQLiteOpenHelper {
         values.put(EVENT_COLS[1], end);
         values.put(EVENT_COLS[2], type);
         db.insert(TABLE_EVENT, null, values);
+
+        //zw
+        /*FrameData frameData = new FrameData();
+        frameData.eventType = type;
+        frameData.eventStart = start;
+        frameData.eventEnd = end;*/
+        //
         db.close();
     }
 

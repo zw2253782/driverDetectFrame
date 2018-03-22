@@ -23,5 +23,10 @@ public class Event {
 		this.end_index_ = end_index;
 		this.type_ = type;
 	};
+	public Event(long start, long end, String type) {
+		this.start_ = start;
+		this.end_ = end;
+		this.type_ = type;
+	};
 
 }

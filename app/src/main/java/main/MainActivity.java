@@ -6,13 +6,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.hardware.Camera;
-import android.media.CamcorderProfile;
-import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Menu;
@@ -22,9 +25,11 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.ImageView;
 
 import com.google.gson.Gson;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -35,6 +40,9 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import api.NativeClassAPI;
 import database.DatabaseHelper;
@@ -47,18 +55,18 @@ import services.GPSServiceConnection;
 import services.PhoneSensorConnection;
 import services.PhoneSensorService;
 import services.SensorService;
-import services.SerialPortConnection;
-import services.SerialPortService;
 import services.TCPClientService;
 import services.TCPClientServiceConnection;
 import services.UDPService;
 import services.UDPServiceConnection;
 import utility.Constants;
 import utility.ControlCommand;
+import utility.Event;
 import utility.FrameData;
 import utility.FramePacket;
 import utility.OriginalTrace;
 import utility.RawFrame;
+import utility.TraceSensor;
 
 
 public class MainActivity extends Activity implements SurfaceHolder.Callback, Camera.PreviewCallback {
@@ -71,21 +79,16 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	private static int frame_bitrate = (int)1e6; // 1mbps
 	// 0.5mbps 1mpbs 1.5mpbs 2mbps 2.5mbps 3mbps
 
-	Camera camera;
+	private Camera camera;
 	SurfaceHolder previewHolder;
 	byte[] previewBuffer;
 	//these boolean value should be false when streaming
 	boolean isStreaming = false;
 	boolean storeRawFrames = false;
 	boolean loadFromRawFrames = false;
-	//qbz
-	private MediaRecorder mMediaRecorder;
-	private File mOutputFile;
-	private boolean isRecording = false;
 
 
-	//qbz
-
+	Event getEvent;
 	AvcEncoder encoder;
     boolean consistentControl = false;
 
@@ -103,8 +106,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	private FileInputStream fIn_ = null;
 
 	// width* height = 640 * 480 or 320 * 240
-	private int width = 640;
-	private int height = 480;
+	private int width = 1024;
+	private int height = 768;
 	private int bitsPerPixel = 12;
 
 	//////
@@ -126,6 +129,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT ?
 					Environment.DIRECTORY_DOCUMENTS : Environment.DIRECTORY_DCIM);
 	private static final String SUB_DIRECTORY = "OmniCameras";
+	private boolean DEVELOPER_MODE = false;
+
 	//qbz
 
 	//private VehicleDynamicTracker vehicleDynamicTracker = null;
@@ -133,11 +138,27 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         System.loadLibrary("MyOpencvLibs");
     }
 
-    @Override
+    //@SuppressLint("WrongViewCast")
+	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		if (DEVELOPER_MODE) {
+			StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+					.detectDiskReads()
+					.detectDiskWrites()
+					.detectNetwork()   // or .detectAll() for all detectable problems
+					.penaltyLog()
+					.build());
+			StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+					.detectLeakedSqlLiteObjects()
+					.detectLeakedClosableObjects()
+					.penaltyLog()
+					.penaltyDeath()
+					.build());
+		}
 		super.onCreate(savedInstanceState);
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		this.setContentView(R.layout.activity_main);
+
 
 		if (Build.MODEL.equals("Nexus 5X")){
 			//Nexus 5X's screen is reversed, ridiculous! the image sensor does not fit in correct orientation
@@ -168,7 +189,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 								Log.d(TAG,"mNextVideoAbsolutePath!=null" + DatabaseHelperSensor.exportDB(mNextVideoAbsolutePath, dbname));
 							}
 							dbname = null;
-							//DatabaseHelperSensor.exportDB(mNextVideoAbsolutePath, dbname);
 							//
 
 						} else {
@@ -190,6 +210,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		SurfaceView svCameraPreview = (SurfaceView) this.findViewById(R.id.svCameraPreview);
 		this.previewHolder = svCameraPreview.getHolder();
 		this.previewHolder.addCallback(this);
+
 	}
 
 
@@ -208,10 +229,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			startUDPService();
 		}
 
-		//.mSensor = new Intent(this, SensorService.class);
+		//mSensor = new Intent(this, SensorService.class);
 		//startService(mSensor);
 
-		//LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("sensor"));
+		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("EventDetection"));
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("udp"));
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("control"));
 
@@ -240,8 +261,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			File outFile = new File(Constants.kVideoFolder.concat(String.valueOf(startTime)).concat(".raw"));
 			this.fOut_ = new FileOutputStream(outFile, true);
 
-            File inFile = new File(Constants.kVideoFolder.concat("1521329294836.raw"));
-            this.fIn_ = new FileInputStream(inFile);
+            //File inFile = new File(Constants.kVideoFolder.concat("1521329294836.raw"));
+           // this.fIn_ = new FileInputStream(inFile);
         } catch (Exception e) {
 			Log.e(TAG, e.getMessage());
 		}
@@ -252,12 +273,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	public File dir = null;
 	private void setupFolders () {
 		File dbDir = new File(Constants.kDBFolder);
-		//File sensorDBDir = new File(Constants.sensorDBFolder);
+		File sensorDBDir = new File(Constants.sensorDBFolder);
 		File videoDir = new File(Constants.kVideoFolder);
-		//if (!sensorDBDir.exists()) {
-		//	sensorDBDir.mkdirs();
-		//	dir = sensorDBDir;
-		//}
+		if (!sensorDBDir.exists()) {
+			sensorDBDir.mkdirs();
+			dir = sensorDBDir;
+		}
 		if(!dbDir.exists()) {
 			dbDir.mkdir();
 		}
@@ -321,7 +342,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		this.stopStream();
 		if (encoder != null)
 			encoder.close();
-
 		super.onPause();
 	}
 
@@ -388,6 +408,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		Thread controlThread = new Thread(controlMessageThread);
 		controlThread.start();
 
+
 		((Button) this.findViewById(R.id.btnstart)).setText("Stop");
 		this.findViewById(R.id.btntest).setEnabled(false);
 
@@ -404,6 +425,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		this.encoder = null;
 
 		this.findViewById(R.id.btntest).setEnabled(true);
+
 	}
 
 	private void startCamera() {
@@ -438,7 +460,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		}
 	}
 
-
 	private void stopCamera() {
 		if (camera != null) {
 			camera.setPreviewCallback(null);
@@ -455,6 +476,21 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 	 */
 	@Override
 	public void onPreviewFrame(byte[] data, Camera camera) {
+
+		//zw3021 save bitmap images
+/*				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				YuvImage yuvImage = new YuvImage(data, ImageFormat.NV21, width, height, null);
+				yuvImage.compressToJpeg(new Rect(0, 0, width, height), 100, out);
+				byte[] imageBytes = out.toByteArray();
+				Bitmap image = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+				try {
+					imageOut = new FileOutputStream(Constants.sensorDBFolder + String.valueOf(System.currentTimeMillis())+".jpeg");
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+				image.compress(Bitmap.CompressFormat.JPEG, 100, imageOut);
+				//end*/
+
 		camera.addCallbackBuffer(previewBuffer);
 
 		// replay the video frames
@@ -501,25 +537,56 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 			encoder.forceIFrame();
 			FrameData frameData = encoder.offerEncoder(data);
+			if (getEvent!=null){
+				frameData.eventStart= getEvent.start_;
+				frameData.eventEnd= getEvent.end_;
+				frameData.eventType= getEvent.type_;
+
+
+			}
+
+			//zw
+	/*		Event event = new Event();
+			frameData.eventStart = event.start_;
+			frameData.eventEnd = event.end_;
+			frameData.eventType = event.type_;*/
+			//
             if (frameData.compressedDataSize == 0) {
             	// do nothing
-				//Log.d(TAG,"compressedDataSize is 0");
+				Log.d(TAG,"compressedDataSize is 0");
 			} else if (storeRawFrames) {
                 RawFrame rawFrame = new RawFrame(frameData, this.gyro, this.gps);
                 appendToVideoFile(rawFrame, data);
 				Log.d(TAG,"storeRawFrames");
-
 			} else {
-				RawFrame rawFrame = new RawFrame(frameData, this.gyro, this.gps);
+				//RawFrame rawFrame = new RawFrame(frameData, this.gyro, this.gps);
 				//appendToVideoFile(rawFrame, data);
-                synchronized (encDataList) {
+
+				/*//zw3021 save the image before sending
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				YuvImage yuvImage = new YuvImage(data, ImageFormat.NV21, width, height, null);
+				yuvImage.compressToJpeg(new Rect(0, 0, width, height), 100, out);
+				byte[] imageBytes = out.toByteArray();
+				Bitmap image = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+				if (frameData.frameSendTime > 0.0){
+					try {
+						imageOut = new FileOutputStream(Constants.sensorDBFolder + String.valueOf(frameData.frameSendTime)+".jpeg");
+					} catch (FileNotFoundException e) {
+						e.printStackTrace();
+					}
+				}
+				image.compress(Bitmap.CompressFormat.JPEG, 100, imageOut);
+				//end*/
+
+				synchronized (encDataList) {
                     encDataList.add(frameData);
 					//Log.d(TAG,"encDataList.add(frameData)");
-
 				}
             }
 		}
 	}
+
+	FileOutputStream imageOut = null;
 
 	private void appendToVideoFile(Object header, byte [] data) {
 		try {
@@ -534,7 +601,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 			e.printStackTrace();
 		}
 	}
-
 
 	//initial UDPConnetion
 	private static Intent mUDPService = null;
@@ -574,33 +640,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		}
 	}
 
-
-	//initial SerialPortConnection
-	private static Intent mSerial = null;
-	private static SerialPortConnection mSerialPortConnection = null;
-
-	private void startSerialService() {
-		Log.d(TAG, "start serial service");
-		mSerial = new Intent(this, SerialPortService.class);
-		mSerialPortConnection = new SerialPortConnection();
-		bindService(mSerial, mSerialPortConnection, Context.BIND_AUTO_CREATE);
-		startService(mSerial);
-	}
-
-	private void stopSerialService() {
-
-		Log.d(TAG, "stop serial service");
-		if(mSerial != null && mSerialPortConnection != null) {
-			mSerialPortConnection.sendCommandFunction("throttle(0.0)");
-			mSerialPortConnection.sendCommandFunction("steering(0.5)");
-
-			unbindService(mSerialPortConnection);
-			stopService(mSerial);
-			mSerial = null;
-			mSerialPortConnection = null;
-		}
-	}
-
 	private OriginalTrace gyro = null;
 	private OriginalTrace gps = null;
 
@@ -625,6 +664,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 					dbHelper_.insertSensorData(trace);
 				}
 				// Log.d(TAG, "sensor data: " + message);
+			}else if(intent.getAction().equals("EventDetection")) {
+				String message = intent.getStringExtra("event");
+
+				Gson gson = new Gson();
+				getEvent= gson.fromJson(message, Event.class);
+				Log.d(TAG,"get event broadcast");
+
 			} else if(intent.getAction().equals("udp")) {
 				String message = intent.getStringExtra("latency");
 
@@ -697,6 +743,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 				for (int i = 0; i < packets.size(); ++i) {
 					if(useTCP && mTCPClientServiceConnection != null && mTCPClientServiceConnection.isRunning()) {
 						mTCPClientServiceConnection.sendData(packets.get(i));
+						Log.d(TAG,"framepacket: " + packets.get(i).parketeventType);
 					}
                     if (!useTCP && mUDPConnection != null && mUDPConnection.isRunning()) {
                         mUDPConnection.sendData(packets.get(i), address, port);
@@ -744,20 +791,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                         }
                     }
                 }
-				//if (mSerialPortConnection != null) {
-					//double throttle = (float)0.0;
-					//double steering = controlCommand.steering;
-				//	if(controlCommand.throttle > 0.5) {
-					//	throttle = (float) ((controlCommand.throttle-0.5) * 0.4 + 1.0);
-				//	}
-					//mSerialPortConnection.sendCommandFunction("throttle(" + String.valueOf(throttle) + ")");
-					//mSerialPortConnection.sendCommandFunction("steering(" + String.valueOf(steering) + ")");
-				//}
+
 			}
 		}
 	};
-
-
 
 	///qbz
 	public void startGPSService() {
@@ -810,7 +847,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
 	}
 
-	//qbz
+	//qbz 0319
 	private String createFilePath(Context context)  throws IOException{
 		String state = Environment.getExternalStorageState();
 		if (!state.equals(Environment.MEDIA_MOUNTED)) {
@@ -828,76 +865,4 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 		return Environment.getExternalStorageDirectory() +  "/" + SUB_DIRECTORY + "/" + String.valueOf(time) + "/";
 		//return context.getExternalFilesDir(null).getAbsolutePath() + "/" + System.currentTimeMillis() + ".mp4";
 	}
-
-
-/*	private boolean prepareVideoRecorder(){
-
-		// BEGIN_INCLUDE (configure_preview)
-		camera = CameraHelper.getDefaultCameraInstance();
-
-		// We need to make sure that our preview and recording video size are supported by the
-		// camera. Query camera to find all the sizes and choose the optimal size given the
-		// dimensions of our preview surface.
-		Camera.Parameters parameters = camera.getParameters();
-		List<Camera.Size> mSupportedPreviewSizes = parameters.getSupportedPreviewSizes();
-		List<Camera.Size> mSupportedVideoSizes = parameters.getSupportedVideoSizes();
-		Camera.Size optimalSize = CameraHelper.getOptimalVideoSize(mSupportedVideoSizes,
-				mSupportedPreviewSizes, mPreview.getWidth(), mPreview.getHeight());
-
-		// Use the same size for recording profile.
-		CamcorderProfile profile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
-		profile.videoFrameWidth = optimalSize.width;
-		profile.videoFrameHeight = optimalSize.height;
-
-		// likewise for the camera object itself.
-		parameters.setPreviewSize(profile.videoFrameWidth, profile.videoFrameHeight);
-		camera.setParameters(parameters);
-		try {
-			// Requires API level 11+, For backward compatibility use {@link setPreviewDisplay}
-			// with {@link SurfaceView}
-			camera.setPreviewTexture(mPreview.getSurfaceTexture());
-		} catch (IOException e) {
-			Log.e(TAG, "Surface texture is unavailable or unsuitable" + e.getMessage());
-			return false;
-		}
-		// END_INCLUDE (configure_preview)
-
-
-		// BEGIN_INCLUDE (configure_media_recorder)
-		mMediaRecorder = new MediaRecorder();
-
-		// Step 1: Unlock and set camera to MediaRecorder
-		camera.unlock();
-		mMediaRecorder.setCamera(camera);
-
-		// Step 2: Set sources
-		mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT );
-		mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-
-		// Step 3: Set a CamcorderProfile (requires API Level 8 or higher)
-		mMediaRecorder.setProfile(profile);
-
-		// Step 4: Set output file
-		mOutputFile = CameraHelper.getOutputMediaFile(CameraHelper.MEDIA_TYPE_VIDEO);
-		if (mOutputFile == null) {
-			return false;
-		}
-		mMediaRecorder.setOutputFile(mOutputFile.getPath());
-		// END_INCLUDE (configure_media_recorder)
-
-		// Step 5: Prepare configured MediaRecorder
-		try {
-			mMediaRecorder.prepare();
-		} catch (IllegalStateException e) {
-			Log.d(TAG, "IllegalStateException preparing MediaRecorder: " + e.getMessage());
-			releaseMediaRecorder();
-			return false;
-		} catch (IOException e) {
-			Log.d(TAG, "IOException preparing MediaRecorder: " + e.getMessage());
-			releaseMediaRecorder();
-			return false;
-		}
-		return true;
-	}*/
-
 }
